@@ -11,7 +11,11 @@ import cv2
 
 
 class PiBotSim(object):
-    def __init__(self, pose:np.ndarray = np.array([1,1,0],dtype=np.float64), ax:Optional[Axes] = None, dt:float=0.05,):
+    def __init__(self,
+                 pose:np.ndarray = np.array([1,1,0],dtype=np.float64),
+                 ax:Optional[Axes] = None,
+                 dt:float=0.05,
+                 ):
         # Initialise figure for plotting.
         if ax is None:
             self.fig,_ = plt.subplots(1,1)
