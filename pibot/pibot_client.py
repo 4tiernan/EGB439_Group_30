@@ -181,7 +181,7 @@ class PiBot(object):
     def _enable_signals(self):
         for sig,orig_func in zip(self._signals,self._original_sig_handlers):
             if signal.getsignal(sig) == orig_func:
-                signal.signal(sig,lambda *args,**kwargs: self._handle_signal(*args))
+                signal.signal(sig,lambda *args,**kwargs: self._handle_signals(*args))
     def _clear_signals(self):
         for sig,orig_func in zip(self._signals,self._original_sig_handlers):
             signal.signal(sig,orig_func)
