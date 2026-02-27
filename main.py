@@ -8,7 +8,6 @@ wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected t
 
 bot = pibot_client.PiBot(ip="172.19.232.120")
 
-
 def main_loop():
     bot.setVelocity(20,20,1)
     print(bot.getEncoders())
