@@ -3,7 +3,6 @@ from pibot import pibot_client
 import time
 from colour_printing import print_coloured, bcolors
 
-
 wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
 
 bot = pibot_client.PiBot(ip="172.19.232.120")
