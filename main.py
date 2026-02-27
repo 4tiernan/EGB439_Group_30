@@ -4,3 +4,4 @@ bot = PiBot(ip="172.19.232.120")
 
 # testing new branch features
 
+# good function to merge
