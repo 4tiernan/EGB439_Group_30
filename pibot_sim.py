@@ -25,8 +25,19 @@ class PiBotSim(object):
                      can watch the robot move.  If False, runs as fast as possible
                      and shows the result afterwards.
         arena_size : Side length of the square arena in metres.
+
         """
-        # ── Figure / axes ────────────────────────────────────────────────────
+        # Robot state 
+        self.pose = pose.copy()          # [x, y, theta]  (dynamics centre)
+        self.dt = dt
+        self.realtime = realtime
+        self.path_x = [pose[0]]
+        self.path_y = [pose[1]]
+
+        self.v = 0.0                     # initial forward velocity  (m/s)
+        self.w = 0.0                     # initial angular velocity  (rad/s)
+
+        # Figure / axes
         if ax is None:
             self.fig, _ = plt.subplots(1, 1)
             self.axes = self.fig.axes[0]
@@ -34,41 +45,61 @@ class PiBotSim(object):
             self.axes = ax
             self.fig = ax.get_figure()
 
-        # ── Robot state ───────────────────────────────────────────────────────
-        self.pose = pose.copy()          # [x, y, theta]  (dynamics centre)
-        self.dt = dt
-        self.realtime = realtime
         self.arena_size = arena_size
 
-        self.v = 0.0                     # initial forward velocity  (m/s)
-        self.w = 0.0                     # initial angular velocity  (rad/s)
+        self.axes.set_xlim(-0.1, self.arena_size + 0.1)
+        self.axes.set_ylim(-0.1, self.arena_size + 0.1)
+        self.axes.set_aspect('equal')
+        self.axes.set_title("PiBot Simulator")
+        self.axes.set_xlabel("X (m)")
+        self.axes.set_ylabel("Y (m)")
 
-        # ── Physical parameters ───────────────────────────────────────────────
+        # Draw arena once — never needs to change
+        border = plt.Polygon(
+            [[0,0],[self.arena_size,0],[self.arena_size,self.arena_size],[0,self.arena_size]],
+            closed=True, fill=False, edgecolor='black', linewidth=2
+        )
+        self.axes.add_patch(border)
+
+        # Create artists that will be updated each frame
+        self.path_line,    = self.axes.plot([], [], 'b-', linewidth=1, label='Path')
+        self.robot_fill    = self.axes.fill([], [], color='red', alpha=0.7)[0]
+        self.robot_outline,= self.axes.plot([], [], 'r-')
+        self.localiser_dot,= self.axes.plot([], [], 'k+', markersize=8, label='Localiser')
+                
+        # Mark the start position with a green dot
+        self.axes.plot(self.pose[0], self.pose[1], 'go', markersize=6, label='Start')
+        # Legend for start position
+        self.axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=8)
+
+
+
+        # Physical parameters 
         self.wheel_radius = 0.065/2         # metres  
         self.wheel_base   = 0.147         # metres 
 
-        # ── Motor limits ──────────────────────────────────────────────────────
+        # Motor limits 
         self.max_motor_cmd   = 100       # absolute command magnitude
         self.deadzone        = 5         # commands below this are ignored
         self.max_linear_speed  = 0.5     # m/s   — tune to your robot
         self.max_angular_speed = 2.0     # rad/s — tune to your robot
 
-        # ── Path history ──────────────────────────────────────────────────────
+        # Path history 
         self.path = [self.pose[:2].copy()]
 
-        # ── Extended: localiser simulation ───────────────────────────────────
+        # Extended: localiser simulation 
         self.localiser_pose  = self.pose.copy()
-        self.localiser_rate  = 2.0       # Hz  (matches real hardware)
+        self.localiser_rate  = 2.0       # Hz  (matches real hardware) # DO 20hz for extra functionality test
         self.localiser_timer = 0.0
-        self.pose_offset     = 0.02      # 20 mm forward offset of LED
+        self.pose_offset     = 0.02      # 20 mm forward offset of LED # DO 0.5 for extra functionality test
 
-        # ── Duration command support ──────────────────────────────────────────
+        #  Duration command support 
         self.command_duration = None
         self.command_timer    = 0.0
 
-    # =========================================================================
+    
     # Core simulation step
-    # =========================================================================
+
     def step(self):
 
         '''
@@ -89,8 +120,9 @@ class PiBotSim(object):
 
         # Update pose and path history
         self.pose = np.array([x, y, theta])
-        self.path.append(self.pose[:2].copy())
-        print(f"Pose: [x]: {np.round(self.pose[0], 2)}, [y]: {np.round(self.pose[1], 2)}, [theta]: {np.round(self.pose[2], 2)}")
+        print(f"Pose: {np.round(self.pose, 2)}")
+        self.path_x.append(self.pose[0])
+        self.path_y.append(self.pose[1])
 
         # Localiser update at 2 Hz 
         self.localiser_timer += self.dt
@@ -100,7 +132,7 @@ class PiBotSim(object):
             x_l = x + self.pose_offset * np.cos(theta)
             y_l = y + self.pose_offset * np.sin(theta)
             self.localiser_pose = np.array([x_l, y_l, theta])
-        #print(f"Forward Velocity: {np.round(self.v, 2)}, Angular Velocity: {np.round(self.w, 2)}, Localiser pose: {np.round(self.localiser_pose, 2)}")
+        #print(f"Localiser pose: {np.round(self.localiser_pose, 2)}")
 
         if self.command_duration is not None:
             self.command_timer += self.dt
@@ -108,92 +140,59 @@ class PiBotSim(object):
                 self.stop()
                 self.command_duration = None
         
-        if self.realtime:
-            time.sleep(self.dt)
 
     def simulate(self):
+        render_interval = 1/30
+        last_render = time.time()
+        step_start = time.time()
+
         while True:
             self.step()
+
+            now = time.time()
+            if self.realtime:
+                if (now - last_render) >= render_interval:
+                    self.update_plot()
+                    last_render = now
+
+                # Pace to real time based on when this step started
+                step_end = step_start + self.dt
+                sleep_time = step_end - time.time()
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+                step_start = step_end  # advance the clock
+
+            if self.command_duration is None and self.v == 0 and self.w == 0:
+                break
+
+        if not self.realtime:
             self.update_plot()
-            if self.v == 0 and self.w == 0:
-                break  # robot has auto-stopped
 
-
-    def run_interactive(self):
-        """Step the simulation one dt each time you press the right arrow key."""
-        
-        def on_key(event):
-            if event.key == 'right':
-                self.step()
-                self.update_plot()
-        
-        self.fig.canvas.mpl_connect('key_press_event', on_key)
-        self.update_plot()  # draw initial state
-        plt.show()          # blocks here, events fire while window is open
 
     # Plotting
     def update_plot(self):
+        # Update path
+        
+        self.path_line.set_data(self.path_x, self.path_y)
 
-        '''
-        Show the current state of the simulation. 
-
-        Note: Instead of using plt.plot to make your plots, use self.axes.plot()
-        instead.
-        You may also prefer to use self.fig.canvas.start_event_loop(wait_time)
-        instead of plt.pause(wait_time) to actually trigger the graphical update.
-        '''
-
-        ax = self.axes
-        ax.clear()
-
-        # Define arena boundary 
-        border = plt.Polygon(
-            [[0, 0], [self.arena_size, 0],
-             [self.arena_size, self.arena_size], [0, self.arena_size]],
-            closed=True, fill=False, edgecolor='black', linewidth=2
-        )
-        ax.add_patch(border)
-        ax.set_xlim(-0.1, self.arena_size + 0.1)
-        ax.set_ylim(-0.1, self.arena_size + 0.1)
-        ax.set_aspect('equal')
-
-        # --- Path ------------------------------------------------------------
-        path = np.array(self.path)
-        if len(path) > 1:
-            ax.plot(path[:, 0], path[:, 1], 'b-', linewidth=1, label='Path')
-
-        # Mark start
-        ax.plot(path[0, 0], path[0, 1], 'go', markersize=6, label='Start')
-
-        # --- Robot (triangle pointing in heading direction) ------------------
+        # Update robot triangle
         x, y, theta = self.pose
-        L = 0.08  # triangle size
-
-        triangle = np.array([
-            [ L,    0   ],
-            [-L/2,  L/2 ],
-            [-L/2, -L/2 ],
-            [ L,    0   ],
-        ])
+        L = 0.08
+        triangle = np.array([[L, 0], [-L/2, L/2], [-L/2, -L/2], [L, 0]])
         R = np.array([[np.cos(theta), -np.sin(theta)],
-                      [np.sin(theta),  np.cos(theta)]])
+                    [np.sin(theta),  np.cos(theta)]])
         tri = (R @ triangle.T).T + np.array([x, y])
-        ax.fill(tri[:-1, 0], tri[:-1, 1], color='red', alpha=0.7)
-        ax.plot(tri[:, 0], tri[:, 1], 'r-')
+        self.robot_fill.set_xy(tri[:-1])
+        self.robot_outline.set_data(tri[:, 0], tri[:, 1])
 
-        # --- Localiser pose (small cross) ------------------------------------
+        # Update localiser
         lx, ly, _ = self.localiser_pose
-        ax.plot(lx, ly, 'k+', markersize=8, label='Localiser')
+        self.localiser_dot.set_data([lx], [ly])
 
-        # --- Labels ----------------------------------------------------------
-        ax.set_title("PiBot Simulator")
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
-        ax.legend(loc='upper right', fontsize=8)
+        self.fig.canvas.draw_idle()
+        self.fig.canvas.flush_events()
 
-        plt.pause(0.001)  # allow the plot to update
-
-    # Motion commands, not really used.
+    # Motion commands
     def move(self, forward_vel, rotational_vel, duration=None):
 
         forward_vel    = np.clip(forward_vel, -self.max_linear_speed, self.max_linear_speed)
