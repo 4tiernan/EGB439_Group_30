@@ -90,6 +90,7 @@ class PiBotSim(object):
         # Update pose and path history
         self.pose = np.array([x, y, theta])
         self.path.append(self.pose[:2].copy())
+        print(f"Pose: [x]: {np.round(self.pose[0], 2)}, [y]: {np.round(self.pose[1], 2)}, [theta]: {np.round(self.pose[2], 2)}")
 
         # Localiser update at 2 Hz 
         self.localiser_timer += self.dt
@@ -99,8 +100,23 @@ class PiBotSim(object):
             x_l = x + self.pose_offset * np.cos(theta)
             y_l = y + self.pose_offset * np.sin(theta)
             self.localiser_pose = np.array([x_l, y_l, theta])
-        print(f"Forward Velocity: {self.v}, Angular Velocity: {self.w}, Localiser pose: {self.localiser_pose}")
+        #print(f"Forward Velocity: {np.round(self.v, 2)}, Angular Velocity: {np.round(self.w, 2)}, Localiser pose: {np.round(self.localiser_pose, 2)}")
 
+        if self.command_duration is not None:
+            self.command_timer += self.dt
+            if self.command_timer >= self.command_duration:
+                self.stop()
+                self.command_duration = None
+        
+        if self.realtime:
+            time.sleep(self.dt)
+
+    def simulate(self):
+        while True:
+            self.step()
+            self.update_plot()
+            if self.v == 0 and self.w == 0:
+                break  # robot has auto-stopped
 
 
     def run_interactive(self):
@@ -177,15 +193,21 @@ class PiBotSim(object):
 
         plt.pause(0.001)  # allow the plot to update
 
-    # Motion commands
-    def move(self, forward_vel: float, rotational_vel: float):
-        """
-        Command the robot with (forward_vel m/s, rotational_vel rad/s).
-        Optionally specify a duration in seconds after which the robot stops.
-        """
-        self.v = np.clip(forward_vel,   -self.max_linear_speed,  self.max_linear_speed)
-        self.w = np.clip(rotational_vel, -self.max_angular_speed, self.max_angular_speed)
+    # Motion commands, not really used.
+    def move(self, forward_vel, rotational_vel, duration=None):
 
+        forward_vel    = np.clip(forward_vel, -self.max_linear_speed, self.max_linear_speed)
+        rotational_vel = np.clip(rotational_vel, -self.max_angular_speed, self.max_angular_speed)
+
+        v_left  = forward_vel - (rotational_vel * self.wheel_base / 2)
+        v_right = forward_vel + (rotational_vel * self.wheel_base / 2)
+
+        scale = self.max_motor_cmd / self.max_linear_speed
+        left_cmd  = v_left  * scale
+        right_cmd = v_right * scale
+
+        # Negate left_cmd to counteract the hardware flip in setVelocity
+        self.setVelocity(-left_cmd, right_cmd, duration=duration)
 
     def setVelocity(self, motor_left=0, motor_right=0, duration=None, acceleration_time=None):
         """
@@ -193,6 +215,9 @@ class PiBotSim(object):
         Converts raw motor commands [-100, 100] to (v, w) via unicycle model.
         Commands inside the deadzone are treated as zero.
         """
+        # Fix motor orientation — left motor is flipped on real hardware
+        motor_left  = -motor_left
+
         # Apply deadzone
         if abs(motor_left)  < self.deadzone: motor_left  = 0
         if abs(motor_right) < self.deadzone: motor_right = 0
@@ -203,8 +228,8 @@ class PiBotSim(object):
 
         # Scale to wheel angular speed (rad/s), then to linear wheel speed (m/s)
         # Assumes motor_cmd 100 => max_linear_speed at each wheel
-        scale = self.max_linear_speed / self.max_motor_cmd
-        v_left  = motor_left  * scale
+        scale = self.max_linear_speed / self.max_motor_cmd # 0.5m/s / 100 = 0.005 m/s per motor command unit
+        v_left  = motor_left  * scale 
         v_right = motor_right * scale
 
         # Unicycle: v = (vR + vL)/2,  w = (vR - vL) / wheel_base
