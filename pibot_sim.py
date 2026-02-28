@@ -44,8 +44,8 @@ class PiBotSim(object):
         self.w = 0.0                     # initial angular velocity  (rad/s)
 
         # ── Physical parameters ───────────────────────────────────────────────
-        self.wheel_radius = 0.03         # metres  — REPLACE WITH REAL MEASUREMENT
-        self.wheel_base   = 0.10         # metres  — REPLACE WITH REAL MEASUREMENT
+        self.wheel_radius = 0.065/2         # metres  
+        self.wheel_base   = 0.147         # metres 
 
         # ── Motor limits ──────────────────────────────────────────────────────
         self.max_motor_cmd   = 100       # absolute command magnitude
