@@ -1,4 +1,4 @@
-from pibot_sim import *
+from pibot.pibot_sim import *
 
 if __name__ == "__main__":
     #shouldnt these lines be inside the sim?
