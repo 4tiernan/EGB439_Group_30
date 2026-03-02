@@ -3,13 +3,27 @@ from pibot import pibot_client
 import time
 from colour_printing import print_coloured, bcolors
 
-wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
+on_campus = True
+if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
+    on_campus = False
 
-bot = pibot_client.PiBot(ip="172.19.232.120")
+if(on_campus):
+    wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
+    bot = pibot_client.PiBot(ip="172.19.232.120")
+else:
+    wifi_manager.assert_connection_to_network("penguinpi:07:c5:ca")
+    bot = pibot_client.PiBot(ip="10.42.0.1")
+
+bot.resetEncoder()
+bot.setVelocity(255,255)
+time.sleep(1)
+bot.stop()
+print(bot.getEncoders())
+print(f"Voltage: {bot.getVoltage()}")
 
 def main_loop():
-    bot.setVelocity(20,20,1)
-    print(bot.getEncoders())
+    a=1
+
 
 try:
     while True:
@@ -18,4 +32,5 @@ try:
         time.sleep(1)
 
 except KeyboardInterrupt:
-    wifi_manager.assert_connection_to_network("QUT")
+    if(on_campus):
+        wifi_manager.assert_connection_to_network("QUT")
