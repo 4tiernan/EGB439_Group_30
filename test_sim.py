@@ -1,6 +1,7 @@
 from pibot_sim import *
 
 if __name__ == "__main__":
+    #shouldnt these lines be inside the sim?
     plt.ion()  # ← turn on interactive mode — opens window without blocking
 
     bot = PiBotSim(
@@ -9,12 +10,12 @@ if __name__ == "__main__":
         realtime=True,  # run as fast as possible for testing)
     )
 
+    # Couldn't we just put this in the sim?
     # Helper function to print pose in a nice format
     def print_pose(bot):
         print(f"X: {np.round(bot.pose[0], 2)}  "
               f"Y: {np.round(bot.pose[1], 2)}  "
               f"θ: {np.rad2deg(np.round(bot.pose[2], 2)):.1f}°")
-        
 
     # Square mode: for loop for 4 sides + 4 turns
     for side in range(4):
@@ -29,6 +30,9 @@ if __name__ == "__main__":
         print_pose(bot)
 
     print("Square complete!")
+
+
+    #shouldnt these lines be inside the sim?
     plt.ioff()
     plt.show()
 
