@@ -1,15 +1,21 @@
-from pibot_client import *
+import wifi_manager  
+from pibot import pibot_client
+import time
+from colour_printing import print_coloured, bcolors
 
+wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
 
-bot = PiBot(ip="172.19.232.120")
+bot = pibot_client.PiBot(ip="172.19.232.120")
 
+def main_loop():
+    bot.setVelocity(20,20,1)
+    print(bot.getEncoders())
 
+try:
+    while True:
+        main_loop()
+        bot.setVelocity(0,0)
+        time.sleep(1)
 
-# testing wheels for 3 seconds
-# bot.setVelocity(right_motor, left_motor, duration=if needed)
-# anticlockwise is negative, clockwise is position, currently using PWM signals.
-# bot.setVelocity(-50, -50, duration=3)
-print("Wheels set to 50 for 3 seconds")
-bot.setVelocity(100, 100, 7, 3)
-bot.stop()
-
+except KeyboardInterrupt:
+    wifi_manager.assert_connection_to_network("QUT")
