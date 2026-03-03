@@ -1,7 +1,7 @@
 import argparse
 import time
 import cv2
-from pibot_client import PiBot
+from pibot.pibot_client import PiBot
 
 
 # Change the IP address of the following line to match the IP address of your 

@@ -1,5 +1,5 @@
 import wifi_manager  
-from pibot import pibot_client
+from pibot.pibot_client import PiBot
 import time
 from colour_printing import print_coloured, bcolors
 
@@ -9,10 +9,10 @@ if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() 
 
 if(on_campus):
     wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
-    bot = pibot_client.PiBot(ip="172.19.232.120")
+    bot = PiBot(ip="172.19.232.120")
 else:
     wifi_manager.assert_connection_to_network("penguinpi:07:c5:ca")
-    bot = pibot_client.PiBot(ip="10.42.0.1")
+    bot = PiBot(ip="10.42.0.1")
 
 bot.resetEncoder()
 bot.setVelocity(255,255)
