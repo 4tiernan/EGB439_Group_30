@@ -2,6 +2,7 @@ import wifi_manager
 from pibot.pibot_client import PiBot
 import time
 from colour_printing import print_coloured, bcolors
+from navigation import navigate
 
 on_campus = True
 if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
@@ -15,22 +16,24 @@ else:
     bot = PiBot(ip="10.42.0.1")
 
 bot.resetEncoder()
-bot.setVelocity(255,255)
-time.sleep(1)
-bot.stop()
-print(bot.getEncoders())
-print(f"Voltage: {bot.getVoltage()}")
+#time.sleep(1)
+#print(bot.getEncoders())
+#print(f"Voltage: {bot.getVoltage()}")
+
 
 def main_loop():
-    a=1
+    bot.move(0.1, duration=1)
+    current_pose = bot.getLocalizerPose(group_number=30)
+    target_pose = (1, 1, 0) # Example target pose (x, y, theta)
+    velocity_commands = navigate(current_pose, target_pose)
 
 
 try:
     while True:
         main_loop()
-        bot.setVelocity(0,0)
-        time.sleep(1)
+        time.sleep(0.1)
 
 except KeyboardInterrupt:
+    bot.stop()
     if(on_campus):
         wifi_manager.assert_connection_to_network("QUT")
