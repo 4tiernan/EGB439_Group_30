@@ -5,6 +5,8 @@ from matplotlib.axes import Axes
 import numpy as np
 import time
 from typing import Optional, Iterable
+from pibot.pibot_const import * 
+
 
 
 class PiBotSim(object):
@@ -81,10 +83,10 @@ class PiBotSim(object):
         self.wheel_base   = 0.147         # metres 
 
         # Motor limits 
-        self.max_motor_cmd   = 100       # absolute command magnitude
+        self.max_motor_cmd   = max_velocity_command       # absolute command magnitude
         self.deadzone        = 1         # commands below this are ignored
-        self.max_linear_speed  = 0.5     # m/s   — tune to your robot
-        self.max_angular_speed = 2.0     # rad/s — tune to your robot
+        self.max_linear_speed  = maximum_linear_velocity     # m/s   — tune to your robot
+        self.max_angular_speed = maximum_angular_velocity     # rad/s — tune to your robot
 
         # Path history 
         self.path = [self.pose[:2].copy()]
@@ -141,6 +143,11 @@ class PiBotSim(object):
             if self.command_timer >= self.command_duration:
                 self.stop()
                 self.command_duration = None
+
+    def print_pose(self):
+        print(f"X: {np.round(self.pose[0], 2)}  "
+                f"Y: {np.round(self.pose[1], 2)}  "
+                f"θ: {np.rad2deg(np.round(self.pose[2], 2)):.1f}°")
         
 
     def simulate(self):
@@ -220,6 +227,8 @@ class PiBotSim(object):
 
         # Negate left_cmd to counteract the hardware flip in setVelocity
         self.setVelocity(-left_cmd, right_cmd, duration=duration)
+        self.simulate()
+
 
     def setVelocity(self, motor_left=0, motor_right=0, duration=None, acceleration_time=None):
         """

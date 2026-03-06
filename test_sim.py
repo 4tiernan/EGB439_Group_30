@@ -12,22 +12,17 @@ if __name__ == "__main__":
 
     # Couldn't we just put this in the sim?
     # Helper function to print pose in a nice format
-    def print_pose(bot):
-        print(f"X: {np.round(bot.pose[0], 2)}  "
-              f"Y: {np.round(bot.pose[1], 2)}  "
-              f"θ: {np.rad2deg(np.round(bot.pose[2], 2)):.1f}°")
+
 
     # Square mode: for loop for 4 sides + 4 turns
     for side in range(4):
         print(f"--- Straight {side + 1} ---")
         bot.move(0.5, 0.0, duration=2.0)
-        bot.simulate()
-        print_pose(bot)
+        bot.print_pose()
 
         print(f"--- Corner {side + 1} ---")
         bot.move(0.0, 1.5708, duration=1.0)  # pi/4 rad/s for 1 second = 90 degree turn
-        bot.simulate()
-        print_pose(bot)
+        bot.print_pose()
 
     print("Square complete!")
 
