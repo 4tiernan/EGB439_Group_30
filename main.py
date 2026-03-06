@@ -5,10 +5,9 @@ import time
 import numpy as np
 from colour_printing import print_coloured, bcolors
 from navigation import navigate
+from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
-
-print(max_velocity_command)
 
 use_simulation = False
 on_campus = True
@@ -35,6 +34,8 @@ else: # Using Simulator
         dt=0.05,
         realtime=False,  # True means run as fast as possible for testing)
     )
+
+plotter = Bot_Plotter(bot)
 bot.stop()
 bot.resetEncoder()
 time.sleep(1)
@@ -50,15 +51,16 @@ def update_control():
     if(time.time() - start > 20):
         target_pose = (1.5, 1.5, 0) # Example target pose (x, y, theta)
 
-    velocity_commands = navigate(current_pose, target_pose)
+    velocity_commands, desired_heading = navigate(current_pose, target_pose)
     print(f"Current Pose: {current_pose}, Target Pose: {target_pose}, Velocity Commands: {velocity_commands}")
     bot.move(*velocity_commands)
+    plotter.update(desired_heading=desired_heading)
 
 def main_loop():
     last_loop_time = time.time()
     last_sim_time = time.time()
     while True:
-        if(time.time() - last_loop_time >= 0.5): # Run the main loop at 2 Hz
+        if(time.time() - last_loop_time >= 0.25): # Run the main loop at 2 Hz
             update_control()
             last_loop_time = time.time()
         
@@ -77,7 +79,7 @@ def heading_controller():
 try:
     main_loop()
     #heading_controller()
-    
+
 
 except KeyboardInterrupt:
     if(use_simulation):

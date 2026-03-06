@@ -25,4 +25,4 @@ def navigate(from_pose, to_pose):
     angular_vel = angular_vel_gain * heading_error + heading_correction
     forward_vel = np.clip(forward_vel, 0,0.2)
     angular_vel = np.clip(angular_vel, -1,1)
-    return (forward_vel, angular_vel)
+    return ((forward_vel, angular_vel), desired_heading)

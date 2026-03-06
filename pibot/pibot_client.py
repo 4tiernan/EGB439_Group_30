@@ -192,7 +192,6 @@ class PiBot(object):
         angular_vel_clicks = angular_vel * encoder_clicks_rad
         left_vel_clicks = (forward_vel_clicks - angular_vel_clicks) / pid_velocity_factor # Round the speeds to integers since the PiBot API expects integer values for motor speeds.
         right_vel_clicks = (forward_vel_clicks + angular_vel_clicks) / pid_velocity_factor
-        print(f"pre clipped left:{left_vel_clicks}")
         left_vel_clicks = round(np.clip(left_vel_clicks, -max_velocity_command, max_velocity_command))
         right_vel_clicks = round(np.clip(right_vel_clicks, -max_velocity_command, max_velocity_command))
 

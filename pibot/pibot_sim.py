@@ -74,8 +74,6 @@ class PiBotSim(object):
         # Legend for start position
         self.axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=8)
 
-
-
         # Physical parameters 
         self.wheel_radius = 0.065/2         # metres  
         self.wheel_base   = 0.147         # metres 
