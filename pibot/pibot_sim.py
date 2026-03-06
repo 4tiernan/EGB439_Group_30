@@ -37,6 +37,8 @@ class PiBotSim(object):
         self.v = 0.0                     # initial forward velocity  (m/s)
         self.w = 0.0                     # initial angular velocity  (rad/s)
 
+        plt.ion()  # ← turn on interactive mode — opens window without blocking
+
         # Figure / axes
         if ax is None:
             self.fig, _ = plt.subplots(1, 1)
@@ -80,7 +82,7 @@ class PiBotSim(object):
 
         # Motor limits 
         self.max_motor_cmd   = 100       # absolute command magnitude
-        self.deadzone        = 5         # commands below this are ignored
+        self.deadzone        = 1         # commands below this are ignored
         self.max_linear_speed  = 0.5     # m/s   — tune to your robot
         self.max_angular_speed = 2.0     # rad/s — tune to your robot
 
@@ -91,7 +93,7 @@ class PiBotSim(object):
         self.localiser_pose  = self.pose.copy()
         self.localiser_rate  = 2.0       # Hz  (matches real hardware) # DO 20hz for extra functionality test
         self.localiser_timer = 0.0
-        self.pose_offset     = 0.02      # 20 mm forward offset of LED # DO 0.5 for extra functionality test
+        self.pose_offset     = 0      # 20 mm forward offset of LED # DO 0.5 for extra functionality test
 
         #  Duration command support 
         self.command_duration = None
@@ -120,7 +122,7 @@ class PiBotSim(object):
 
         # Update pose and path history
         self.pose = np.array([x, y, theta])
-        print(f"Pose: {np.round(self.pose, 2)}")
+        #print(f"Pose: {np.round(self.pose, 2)}")
         self.path_x.append(self.pose[0])
         self.path_y.append(self.pose[1])
 
@@ -167,7 +169,10 @@ class PiBotSim(object):
 
         if not self.realtime:
             self.update_plot()
-
+    
+    def update_simulation(self): # Runs the sim for one step and updates the plot (for realtime mode)
+        self.step()
+        self.update_plot()
 
     # Plotting
     def update_plot(self):
@@ -191,6 +196,14 @@ class PiBotSim(object):
 
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
+    
+    def stop_simulation(self):
+        plt.ioff()
+        try:
+            plt.show()
+        except KeyboardInterrupt:
+            pass
+        
 
     # Motion commands
     def move(self, forward_vel, rotational_vel, duration=None):
