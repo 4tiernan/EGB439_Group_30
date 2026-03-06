@@ -9,7 +9,7 @@ from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
 
-use_simulation = False
+use_simulation = True
 on_campus = True
 if(not use_simulation):
     if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
@@ -65,7 +65,7 @@ def main_loop():
             last_loop_time = time.time()
         
         if(use_simulation and time.time() - last_sim_time >= 0.05): # Update the simulation at 20 Hz for smooth animation
-            bot.update_simulation()
+            bot.step(timestep=0.05)
             last_sim_time = time.time()
 
 def heading_controller():

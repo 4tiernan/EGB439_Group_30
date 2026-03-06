@@ -188,6 +188,9 @@ class PiBot(object):
             signal.signal(sig,orig_func)
         
     def move(self, forward_vel=0, angular_vel=0, duration=None, acceleration_time=None):
+        forward_vel    = np.clip(forward_vel, -self.max_linear_speed, self.max_linear_speed)
+        rotational_vel = np.clip(rotational_vel, -self.max_angular_speed, self.max_angular_speed)
+
         forward_vel_clicks = forward_vel * encoder_clicks_per_m
         angular_vel_clicks = angular_vel * encoder_clicks_rad
         left_vel_clicks = (forward_vel_clicks - angular_vel_clicks) / pid_velocity_factor # Round the speeds to integers since the PiBot API expects integer values for motor speeds.
@@ -359,7 +362,7 @@ class PiBot(object):
             resp = requests.get('{}/pose/get?group={}'.format(self.localiser_endpoint, group_number), timeout=1)
             json_decoded = json.loads(resp.text)
             x, y, theta = json_decoded['pose']['x'], json_decoded['pose']['y'], json_decoded['pose']['theta']
-            return float(x), float(y), float(theta)
+            return float(x), float(y), float(np.deg2rad(theta))
         except requests.exceptions.Timeout as e:
             print('Timed out attempting to communicate with {}:{}'.format(self.localiser_ip, self.localiser_port), file=sys.stderr)
             return None

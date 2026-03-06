@@ -7,11 +7,13 @@ class Bot_Plotter():
         plt.ion()  # ← turn on interactive mode — opens window without blocking
 
         self.bot = bot
+        pose = self.bot.getLocalizerPose(group_number=30)
         # Figure / axes
         self.fig, _ = plt.subplots(1, 1)
         self.axes = self.fig.axes[0]
 
-
+        
+        self.path = [[pose[0], pose[1]]]
         self.arena_size = 2.0 # meters
 
         self.axes.set_xlim(-0.1, self.arena_size + 0.1)
@@ -46,7 +48,6 @@ class Bot_Plotter():
         self.localiser_dot,= self.axes.plot([], [], 'k+', markersize=8, label='Localiser')
                 
         # Mark the start position with a green dot
-        pose = self.bot.getLocalizerPose(group_number=30)
         self.axes.plot(pose[0], pose[1], 'go', markersize=6, label='Start')
         # Legend for start position
         self.axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=8)
@@ -59,7 +60,7 @@ class Bot_Plotter():
         # Update robot triangle
         pose = self.bot.getLocalizerPose(group_number=30)
         x, y, theta = pose
-        theta = np.deg2rad(theta)
+        self.path.append([pose[0], pose[1]])
         L = 0.08
         triangle = np.array([[L, 0], [-L/2, L/2], [-L/2, -L/2], [L, 0]])
         R = np.array([[np.cos(theta), -np.sin(theta)],
@@ -82,6 +83,7 @@ class Bot_Plotter():
         # Update localiser
         lx, ly, _ = pose
         self.localiser_dot.set_data([lx], [ly])
+        self.path_line.set_data([point[0] for point in self.path], [point[1] for point in self.path])
 
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()

@@ -4,8 +4,6 @@ def angle_diff(target, current):
 
 def navigate(from_pose, to_pose):
     # Simple heading controller
-    from_pose = [from_pose[0], from_pose[1], np.deg2rad(from_pose[2])] # Convert heading to rad
-
     dist_to_target = np.sqrt((to_pose[0] - from_pose[0])**2 + (to_pose[1] - from_pose[1])**2)
     desired_heading = np.arctan2( to_pose[1] - from_pose[1], to_pose[0] - from_pose[0])
     heading_error = angle_diff(desired_heading, from_pose[2])
