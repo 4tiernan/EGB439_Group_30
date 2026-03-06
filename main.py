@@ -6,7 +6,11 @@ import numpy as np
 from colour_printing import print_coloured, bcolors
 from navigation import navigate
 
-use_simulation = True
+from pibot.pibot_const import * 
+
+print(max_velocity_command)
+
+use_simulation = False
 on_campus = True
 if(not use_simulation):
     if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
@@ -15,7 +19,7 @@ if(not use_simulation):
     if(on_campus):
         wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
         bot_ip = "172.19.232.120"
-        localiser_ip = "172.19.232.104"
+        localiser_ip = "egb439localiser1"
         
     else:
         wifi_manager.assert_connection_to_network("penguinpi:07:c5:ca")
@@ -31,18 +35,21 @@ else: # Using Simulator
         dt=0.05,
         realtime=False,  # True means run as fast as possible for testing)
     )
-
+bot.stop()
 bot.resetEncoder()
-#time.sleep(1)
+time.sleep(1)
 #print(bot.getEncoders())
 #print(f"Voltage: {bot.getVoltage()}")
-
-
+target_pose = (0.2, 0.2, 0) # Example target pose (x, y, theta)
+start = time.time()
 def update_control():
+    global target_pose
     current_pose = bot.getLocalizerPose(group_number=30)
     current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
 
-    target_pose = (1, 1, 0) # Example target pose (x, y, theta)
+    if(time.time() - start > 20):
+        target_pose = (1.5, 1.5, 0) # Example target pose (x, y, theta)
+
     velocity_commands = navigate(current_pose, target_pose)
     print(f"Current Pose: {current_pose}, Target Pose: {target_pose}, Velocity Commands: {velocity_commands}")
     bot.move(*velocity_commands)
@@ -59,13 +66,26 @@ def main_loop():
             bot.update_simulation()
             last_sim_time = time.time()
 
+def heading_controller():
+    while True:
+        current_pose = bot.getLocalizerPose(group_number=30)
+        angular_correction = -np.deg2rad(current_pose[2])
+        bot.move(0,angular_correction, duration=1)
+        time.sleep(1)
+
+
 try:
     main_loop()
+    #heading_controller()
+    
 
 except KeyboardInterrupt:
     if(use_simulation):
         bot.stop_simulation()
     else: 
+        print("Keyboard Interrupt, stopping robot")
         bot.stop()
+        time.sleep(0.5)
     if(on_campus and not use_simulation):
-        wifi_manager.assert_connection_to_network("QUT")
+        #wifi_manager.assert_connection_to_network("QUT")
+        pass

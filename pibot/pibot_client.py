@@ -190,8 +190,12 @@ class PiBot(object):
     def move(self, forward_vel=0, angular_vel=0, duration=None, acceleration_time=None):
         forward_vel_clicks = forward_vel * encoder_clicks_per_m
         angular_vel_clicks = angular_vel * encoder_clicks_rad
-        left_vel_clicks = round((forward_vel_clicks - angular_vel_clicks) / pid_velocity_factor) # Round the speeds to integers since the PiBot API expects integer values for motor speeds.
-        right_vel_clicks = round((forward_vel_clicks + angular_vel_clicks) / pid_velocity_factor)
+        left_vel_clicks = (forward_vel_clicks - angular_vel_clicks) / pid_velocity_factor # Round the speeds to integers since the PiBot API expects integer values for motor speeds.
+        right_vel_clicks = (forward_vel_clicks + angular_vel_clicks) / pid_velocity_factor
+        print(f"pre clipped left:{left_vel_clicks}")
+        left_vel_clicks = round(np.clip(left_vel_clicks, -max_velocity_command, max_velocity_command))
+        right_vel_clicks = round(np.clip(right_vel_clicks, -max_velocity_command, max_velocity_command))
+
         self.setVelocity(motor_left=left_vel_clicks, motor_right=right_vel_clicks, duration=duration, acceleration_time=acceleration_time)
 
     def setVelocity(self, motor_left=0, motor_right=0, duration=None, acceleration_time=None):
