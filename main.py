@@ -43,6 +43,7 @@ time.sleep(1)
 #print(f"Voltage: {bot.getVoltage()}")
 target_pose = (0.2, 0.2, 0) # Example target pose (x, y, theta)
 start = time.time()
+
 def update_control():
     global target_pose
     current_pose = bot.getLocalizerPose(group_number=30)
@@ -52,7 +53,7 @@ def update_control():
         target_pose = (1.5, 1.5, 0) # Example target pose (x, y, theta)
 
     velocity_commands, desired_heading = navigate(current_pose, target_pose)
-    print(f"Current Pose: {current_pose}, Target Pose: {target_pose}, Velocity Commands: {velocity_commands}")
+    print(f"Current Pose: {np.round(current_pose, 2)}, Target Pose: {target_pose}, Velocity Commands: {np.round(velocity_commands, 2)}")
     bot.move(*velocity_commands)
     plotter.update(desired_heading=desired_heading)
 
