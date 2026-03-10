@@ -5,12 +5,11 @@ import time
 import numpy as np
 from colour_printing import print_coloured, bcolors
 from navigation import navigate
+from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
 
-print(max_velocity_command)
-
-use_simulation = False
+use_simulation = True
 on_campus = True
 if(not use_simulation):
     if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
@@ -35,6 +34,8 @@ else: # Using Simulator
         dt=0.05,
         realtime=False,  # True means run as fast as possible for testing)
     )
+
+plotter = Bot_Plotter(bot)
 bot.stop()
 bot.resetEncoder()
 time.sleep(1)
@@ -42,6 +43,7 @@ time.sleep(1)
 #print(f"Voltage: {bot.getVoltage()}")
 target_pose = (0.2, 0.2, 0) # Example target pose (x, y, theta)
 start = time.time()
+
 def update_control():
     global target_pose
     current_pose = bot.getLocalizerPose(group_number=30)
@@ -50,20 +52,21 @@ def update_control():
     if(time.time() - start > 20):
         target_pose = (1.5, 1.5, 0) # Example target pose (x, y, theta)
 
-    velocity_commands = navigate(current_pose, target_pose)
-    print(f"Current Pose: {current_pose}, Target Pose: {target_pose}, Velocity Commands: {velocity_commands}")
+    velocity_commands, desired_heading = navigate(current_pose, target_pose)
+    print(f"Current Pose: {np.round(current_pose, 2)}, Target Pose: {target_pose}, Velocity Commands: {np.round(velocity_commands, 2)}")
     bot.move(*velocity_commands)
+    plotter.update(desired_heading=desired_heading)
 
 def main_loop():
     last_loop_time = time.time()
     last_sim_time = time.time()
     while True:
-        if(time.time() - last_loop_time >= 0.5): # Run the main loop at 2 Hz
+        if(time.time() - last_loop_time >= 0.25): # Run the main loop at 2 Hz
             update_control()
             last_loop_time = time.time()
         
         if(use_simulation and time.time() - last_sim_time >= 0.05): # Update the simulation at 20 Hz for smooth animation
-            bot.update_simulation()
+            bot.step(timestep=0.05)
             last_sim_time = time.time()
 
 def heading_controller():
@@ -77,7 +80,7 @@ def heading_controller():
 try:
     main_loop()
     #heading_controller()
-    
+
 
 except KeyboardInterrupt:
     if(use_simulation):
