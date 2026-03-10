@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 import numpy as np
 import time
 from typing import Optional, Iterable
@@ -10,7 +8,6 @@ from typing import Optional, Iterable
 class PiBotSim(object):
     def __init__(self,
                  pose: np.ndarray = np.array([1, 1, 0], dtype=np.float64),
-                 ax: Optional[Axes] = None,
                  dt: float = 0.05,
                  realtime: bool = False,
                  arena_size: float = 2.0,
@@ -37,42 +34,7 @@ class PiBotSim(object):
         self.v = 0.0                     # initial forward velocity  (m/s)
         self.w = 0.0                     # initial angular velocity  (rad/s)
 
-        plt.ion()  # ← turn on interactive mode — opens window without blocking
-
-        # Figure / axes
-        if ax is None:
-            self.fig, _ = plt.subplots(1, 1)
-            self.axes = self.fig.axes[0]
-        else:
-            self.axes = ax
-            self.fig = ax.get_figure()
-
         self.arena_size = arena_size
-
-        self.axes.set_xlim(-0.1, self.arena_size + 0.1)
-        self.axes.set_ylim(-0.1, self.arena_size + 0.1)
-        self.axes.set_aspect('equal')
-        self.axes.set_title("PiBot Simulator")
-        self.axes.set_xlabel("X (m)")
-        self.axes.set_ylabel("Y (m)")
-
-        # Draw arena once — never needs to change
-        border = plt.Polygon(
-            [[0,0],[self.arena_size,0],[self.arena_size,self.arena_size],[0,self.arena_size]],
-            closed=True, fill=False, edgecolor='black', linewidth=2
-        )
-        self.axes.add_patch(border)
-
-        # Create artists that will be updated each frame
-        self.path_line,    = self.axes.plot([], [], 'b-', linewidth=1, label='Path')
-        self.robot_fill    = self.axes.fill([], [], color='red', alpha=0.7)[0]
-        self.robot_outline,= self.axes.plot([], [], 'r-')
-        self.localiser_dot,= self.axes.plot([], [], 'k+', markersize=8, label='Localiser')
-                
-        # Mark the start position with a green dot
-        self.axes.plot(self.pose[0], self.pose[1], 'go', markersize=6, label='Start')
-        # Legend for start position
-        self.axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=8)
 
         # Physical parameters 
         self.wheel_radius = 0.065/2         # metres  
@@ -195,15 +157,7 @@ class PiBotSim(object):
         self.localiser_dot.set_data([lx], [ly])
 
         self.fig.canvas.draw_idle()
-        self.fig.canvas.flush_events()
-    
-    def stop_simulation(self):
-        plt.ioff()
-        try:
-            plt.show()
-        except KeyboardInterrupt:
-            pass
-        
+        self.fig.canvas.flush_events()        
 
     # Motion commands
     def move(self, forward_vel, rotational_vel, duration=None):

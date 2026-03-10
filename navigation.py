@@ -24,3 +24,68 @@ def navigate(from_pose, to_pose):
     forward_vel = np.clip(forward_vel, 0,0.2)
     angular_vel = np.clip(angular_vel, -1,1)
     return ((forward_vel, angular_vel), desired_heading)
+
+def distance_to_wall_edge(pose, arena_size=(2, 2)):
+    x, y, _ = pose
+    width, height = arena_size
+
+    distances = {
+        "left": x,
+        "right": width - x,
+        "bottom": y,
+        "top": height - y
+    }
+
+    nearest_wall = min(distances, key=distances.get)
+    distance = distances[nearest_wall]
+
+    return distance
+
+def drive_to_line(current_pose):
+    # Line start and end points in world coordinates
+    line_start = 0,2
+    line_end = 2,0
+    a = -2
+    b = -2
+    c = 4
+
+    numerator = a*current_pose[0] + b*current_pose[1] + c
+    denominator = np.sqrt(a**2 + b**2)
+
+    distance_to_line = numerator / denominator
+    print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
+
+    heading_gain = 1
+    distance_gain = 1.5
+    forward_vel_max = 0.25
+    min_wall_dist = 0.1
+    forward_vel = np.clip(distance_to_wall_edge(current_pose) - min_wall_dist, 0, forward_vel_max) # Slow down as we get close to the wall.
+
+    
+    line_angle = np.arctan2(line_end[1] - line_start[1], line_end[0] - line_start[0])   
+
+    line_angle_error = angle_diff(target=line_angle, current=current_pose[2]) * heading_gain
+    distance_error = distance_to_line * distance_gain
+
+    angular_vel = line_angle_error * heading_gain + distance_error * distance_gain
+    limit = np.deg2rad(90)
+    angular_vel = np.clip(angular_vel, -limit, limit)
+
+    desired_heading = current_pose[2] + angular_vel * 0.5 # 0.5s timestep
+
+    print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
+
+    return ((forward_vel, angular_vel), desired_heading)
+
+def pure_pursuit(current_pose):
+    # Line start and end points in world coordinates
+    line_start = 0,2
+    line_end = 2,0
+
+    look_ahead_distance = 0.2
+
+    line_angle = np.arctan2(line_end[1] - line_start[1], line_end[0] - line_start[0])
+    robot_to_line_start = np.linalg.norm(np.array(line_start) - np.array(current_pose[:2]))
+    line_start_to_robot_angle = np.arctan2(current_pose[1] - line_start[1], current_pose[0] - line_start[0])
+    robot_angle_to_line_angle = angle_diff(line_angle, line_start_to_robot_angle)
+    pass
