@@ -6,6 +6,7 @@ class Bot_Plotter():
     def __init__(self, bot): 
         plt.ion()  # ← turn on interactive mode — opens window without blocking
 
+        self.plt = plt
         self.bot = bot
         pose = self.bot.getLocalizerPose(group_number=30)
         # Figure / axes
