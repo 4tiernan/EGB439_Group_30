@@ -18,6 +18,7 @@ def navigate(from_pose, to_pose):
     if(dist_to_target < 0.1): # If we are close to the target, focus on correcting heading rather than moving forward.
         forward_vel_gain = 0
         #heading_correction = 0.1 * (to_pose[2] - from_pose[2]) # Add a correction term to help turn in place when close to the target.
+    # COMMENT: Doesn't this mean at 10cm out, we stop moving?
 
     forward_vel = forward_vel_gain * dist_to_target    
     angular_vel = angular_vel_gain * heading_error + heading_correction

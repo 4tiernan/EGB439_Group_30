@@ -2,7 +2,7 @@ import numpy as np
 
 maximum_pwm_command = 255
 maximum_linear_velocity = 0.5 # m/s
-maximum_angular_velocity = 0.1 # radians/s
+maximum_angular_velocity = np.pi/2 # radians/s
 
 pid_velocity_factor = 10 # ratio between set velocity and encoder clicks per second
 encoder_clicks_per_rotation = 390
