@@ -10,7 +10,7 @@ from pibot.pibot_const import *
 
 print(max_velocity_command)
 
-use_simulation = False
+use_simulation = True
 on_campus = True
 if(not use_simulation):
     if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
@@ -33,7 +33,7 @@ else: # Using Simulator
     bot = PiBotSim(
         pose=np.array([0.5, 0.5, 0.0]),
         dt=0.05,
-        realtime=False,  # True means run as fast as possible for testing)
+        realtime=False,  # False means run as fast as possible for testing
     )
 bot.stop()
 bot.resetEncoder()
