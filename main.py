@@ -4,7 +4,7 @@ from pibot.pibot_sim import PiBotSim
 import time
 import numpy as np
 from colour_printing import print_coloured, bcolors
-from navigation import navigate
+from navigation import navigate, drive_to_line
 from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
@@ -32,7 +32,7 @@ if(not use_simulation):
 else: # Using Simulator
     print_coloured("Running in SIMULATION mode. No real robot will be controlled.", bcolors.WARNING)
     bot = PiBotSim(
-        pose=np.array([0.5, 0.5, 0.0]),
+        pose=np.array([0.7, 1.8, 0.8]),
         dt=0.05,
         realtime=False,  # False means run as fast as possible for testing
     )
@@ -43,19 +43,19 @@ bot.resetEncoder()
 time.sleep(1)
 #print(bot.getEncoders())
 #print(f"Voltage: {bot.getVoltage()}")
-target_pose = (0.2, 0.2, 0) # Example target pose (x, y, theta)
 start = time.time()
+
+plotter.plt.plot([0,2], [2,0], 'r--', label="Target Line")
 
 def update_control():
     global target_pose
     current_pose = bot.getLocalizerPose(group_number=30)
     current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
 
-    if(time.time() - start > 20):
-        target_pose = (1.5, 1.5, 0) # Example target pose (x, y, theta)
+    #velocity_commands, desired_heading = navigate(current_pose, target_pose)
+    velocity_commands, desired_heading = drive_to_line(current_pose)
 
-    velocity_commands, desired_heading = navigate(current_pose, target_pose)
-    print(f"Current Pose: {np.round(current_pose, 2)}, Target Pose: {target_pose}, Velocity Commands: {np.round(velocity_commands, 2)}")
+    print(f"Current Pose: {np.round(current_pose, 2)}, Velocity Commands: {np.round(velocity_commands, 2)}")
     bot.move(*velocity_commands)
     plotter.update(desired_heading=desired_heading)
 
@@ -85,12 +85,9 @@ try:
 
 
 except KeyboardInterrupt:
-    if(use_simulation):
-        bot.stop_simulation()
-    else: 
-        print("Keyboard Interrupt, stopping robot")
-        bot.stop()
-        time.sleep(0.5)
+    print("Keyboard Interrupt, stopping robot")
+    bot.stop()
+    time.sleep(0.5) # Give the stop command time to be sent before exiting.
     if(on_campus and not use_simulation):
         #wifi_manager.assert_connection_to_network("QUT")
         pass
