@@ -104,6 +104,51 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> tuple[float, float
     
     """
 
+    #Step 1 - Find closest point on path
+    robot_pos = current_pose[0:2] # [x, y]
+
+    closest_point = np.array([0, 0], dtype=np.float64)
+    closest_point_distance = np.Infinity
+
+    for i in range(len(path)-1):
+        current_waypoint = path[i]
+        next_waypoint = path[i + 1]
+
+        point = closest_point_line(current_waypoint, next_waypoint)
+
+        distance = np.linalg.norm(point - robot_pos)
+
+
+    #Step 2 - Find point based on distance along path
+
+    #Step 3 - Calcuate heading to target point
+
+
     pass
 
 
+def closest_point_line(start:np.ndarray, end:np.ndarray, point:np.array) -> np.ndarray:
+    return point_on_line(start, end, closest_line(start, end, point))
+
+def closest_line(start:np.ndarray, end:np.ndarray, point:np.array) -> float:
+    """
+        Returns the scalar that results in a vector closest to the point
+    """
+    
+
+    line_vector = end - start
+    point_vector = point - start
+
+    dot = np.dot(line_vector, point_vector)
+
+    return dot
+
+
+def point_on_line(start:np.ndarray, end:np.ndarray, scalar:float) -> np.ndarray:
+    """
+        Using scalar and line data to calculate the world position
+    """
+
+    line_vector = end - start
+
+    return start + line_vector * scalar
