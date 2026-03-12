@@ -39,6 +39,7 @@ else: # Using Simulator
 
 plotter = Bot_Plotter(bot)
 desired_heading = None
+target_reached = False
 bot.stop()
 bot.resetEncoder()
 time.sleep(1)
@@ -51,13 +52,23 @@ plotter.plt.plot([0,2], [2,0], 'r--', label="Target Line")
 def update_control():
     global target_pose
     global desired_heading
+    global target_reached
     current_pose = bot.getLocalizerPose(group_number=30)
     current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
 
     #velocity_commands, desired_heading = navigate(current_pose, target_pose)
-    velocity_commands, desired_heading = drive_to_line(current_pose)
+    
+    if (bot.realtime == False): # Disabled in case of trying to sim ASAP
+        print_statements = False
+    else:
+        print_statements = True
+    velocity_commands, desired_heading, target_reached = drive_to_line(current_pose, print_statements)
 
-    print(f"Current Pose: {np.round(current_pose, 2)}, Velocity Commands: {np.round(velocity_commands, 2)}")
+    if not use_simulation and not bot.realtime: # Disabled in case of trying to sim ASAP
+        pass # Don't print
+    else:
+        print(f"Current Pose: {np.round(current_pose, 2)}, Velocity Commands: {np.round(velocity_commands, 2)}")
+
     bot.move(*velocity_commands)
     #plotter.update(desired_heading=desired_heading)
 
@@ -76,12 +87,12 @@ def simulate(time_now, last_sim_time, last_control_time):
     
     # Sim asap if realtime is false        
     else:
-        if time_now - last_control_time >= 0.5:
-            update_control()
-            last_control_time = time_now
-
+        
+        update_control()
         bot.step(timestep=0.05)
         plotter.update(desired_heading=desired_heading)
+
+    return last_sim_time, last_control_time
 
 def main_loop():
     
@@ -94,9 +105,13 @@ def main_loop():
 
         # If using sim, do sim stuff
         if use_simulation:
-            simulate(now, last_sim_time, last_control_time)
+           last_sim_time, last_control_time = simulate(now, last_sim_time, last_control_time)
+           if target_reached:
+               print("Target Reached")
+               print("Closing Sim, stopping program")
+               break
+         
 
-        
         # Update control for real robot, no sim or plots required
         else:
             if now - last_control_time >= 0.5: #Run program at 2hz (localiser speed)

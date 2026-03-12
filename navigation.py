@@ -42,10 +42,12 @@ def distance_to_wall_edge(pose, arena_size=(2, 2)):
 
     return distance
 
-def drive_to_line(current_pose):
+def drive_to_line(current_pose, print_statements=True):
     # Line start and end points in world coordinates
     line_start = 0,2
     line_end = 2,0
+    target = np.array(line_end)
+    target_reached = False
     a = -2
     b = -2
     c = 4
@@ -54,7 +56,8 @@ def drive_to_line(current_pose):
     denominator = np.sqrt(a**2 + b**2)
 
     distance_to_line = numerator / denominator
-    print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
+    if print_statements:
+        print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
 
     heading_gain = 1
     distance_gain = 1.5
@@ -74,9 +77,16 @@ def drive_to_line(current_pose):
 
     desired_heading = current_pose[2] + angular_vel * 0.5 # 0.5s timestep
 
-    print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
+    if print_statements:
+        print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
 
-    return ((forward_vel, angular_vel), desired_heading)
+    distance_to_target = np.linalg.norm(np.array([current_pose[0],current_pose[1]]) - target)
+    if distance_to_target <= 0.15: # 15% within range
+        target_reached = True
+        
+
+
+    return ((forward_vel, angular_vel), desired_heading, target_reached)
 
 def pure_pursuit(current_pose):
     # Line start and end points in world coordinates
