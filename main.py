@@ -9,8 +9,9 @@ from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
 
-use_simulation = True
+use_simulation = False
 on_campus = True
+
 if(not use_simulation):
     if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
         on_campus = False
