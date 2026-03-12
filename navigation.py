@@ -1,4 +1,5 @@
 import numpy as np
+
 def angle_diff(target, current):
     return (target - current + np.pi) % (2*np.pi) - np.pi
 
@@ -90,3 +91,19 @@ def pure_pursuit(current_pose):
     line_start_to_robot_angle = np.arctan2(current_pose[1] - line_start[1], current_pose[0] - line_start[0])
     robot_angle_to_line_angle = angle_diff(line_angle, line_start_to_robot_angle)
     pass
+
+def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> tuple[float, float]:
+    """
+    pure_pursuit(robot_pose, desired_path)
+
+    robot_pose -> The current pose of the robot in form [x, y, theta]
+
+    desired_path -> The target path for the robot to follow 2xN
+
+    Calculate direction velocity and angular velocity
+    
+    """
+
+    pass
+
+
