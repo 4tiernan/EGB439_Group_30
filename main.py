@@ -19,7 +19,7 @@ if(not use_simulation):
     if(on_campus):
         wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
         bot_ip = "172.19.232.120"
-        localiser_ip = "egb439localiser1"
+        localiser_ip = "egb439localiser2"
         
     else:
         wifi_manager.assert_connection_to_network("penguinpi:07:c5:ca")
@@ -51,18 +51,23 @@ def update_control():
     current_pose = bot.getLocalizerPose(group_number=30)
     current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
 
-    #velocity_commands, desired_heading = navigate(current_pose, target_pose)
-    velocity_commands, desired_heading = drive_to_line(current_pose)
+    if(current_pose == (0,0,0)):
+        bot.move(0,0)
+        plotter.update(0)
+    else:
+        #velocity_commands, desired_heading = navigate(current_pose, target_pose)
+        velocity_commands, desired_heading = drive_to_line(current_pose)
 
-    print(f"Current Pose: {np.round(current_pose, 2)}, Velocity Commands: {np.round(velocity_commands, 2)}")
-    bot.move(*velocity_commands)
-    plotter.update(desired_heading=desired_heading)
+        #print(f"Current Pose: {np.round(current_pose, 2)}, Velocity Commands: {np.round(velocity_commands, 2)}")
+        bot.move(*velocity_commands)
+        plotter.update(desired_heading=desired_heading)
 
 def main_loop():
     last_loop_time = time.time()
     last_sim_time = time.time()
     while True:
-        if(time.time() - last_loop_time >= 0.25): # Run the main loop at 2 Hz
+        if(time.time() - last_loop_time >= 0.1): # Run the main loop at 10 Hz
+            #print(f"Loops Per Second: {round(1/(time.time() - last_loop_time),1)}")
             update_control()
             last_loop_time = time.time()
         
@@ -86,6 +91,7 @@ try:
 except KeyboardInterrupt:
     print("Keyboard Interrupt, stopping robot")
     bot.stop()
+    plotter.keep_plot()
     time.sleep(0.5) # Give the stop command time to be sent before exiting.
     if(on_campus and not use_simulation):
         #wifi_manager.assert_connection_to_network("QUT")

@@ -20,7 +20,7 @@ class Bot_Plotter():
         self.axes.set_xlim(-0.1, self.arena_size + 0.1)
         self.axes.set_ylim(-0.1, self.arena_size + 0.1)
         self.axes.set_aspect('equal')
-        self.axes.set_title("PiBot Simulator")
+        self.axes.set_title("PiBot Plotter")
         self.axes.set_xlabel("X (m)")
         self.axes.set_ylabel("Y (m)")
 
@@ -88,3 +88,11 @@ class Bot_Plotter():
 
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
+    
+    def keep_plot(self):
+        try:
+            while True: 
+                self.fig.canvas.draw_idle()
+                self.fig.canvas.flush_events()
+        except: 
+            pass

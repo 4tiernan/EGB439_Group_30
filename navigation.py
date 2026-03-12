@@ -2,6 +2,9 @@ import numpy as np
 def angle_diff(target, current):
     return (target - current + np.pi) % (2*np.pi) - np.pi
 
+def dist_to_point(pose, point):
+    return np.sqrt((point[0] - pose[0])**2 + (point[1] - pose[1])**2)
+
 def navigate(from_pose, to_pose):
     # Simple heading controller
     dist_to_target = np.sqrt((to_pose[0] - from_pose[0])**2 + (to_pose[1] - from_pose[1])**2)
@@ -53,14 +56,15 @@ def drive_to_line(current_pose):
     denominator = np.sqrt(a**2 + b**2)
 
     distance_to_line = numerator / denominator
-    print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
+    print(f"Distance to line: {round(distance_to_line, 2)}, Wall Distance: {round(distance_to_wall_edge(current_pose), 2)}")
 
     heading_gain = 1
-    distance_gain = 1.5
+    distance_gain = 1.3
     forward_vel_max = 0.25
     min_wall_dist = 0.1
-    forward_vel = np.clip(distance_to_wall_edge(current_pose) - min_wall_dist, 0, forward_vel_max) # Slow down as we get close to the wall.
-
+    
+    #forward_vel = np.clip(distance_to_wall_edge(current_pose) - min_wall_dist, 0, forward_vel_max) # Slow down as we get close to the wall.
+    forward_vel = forward_vel_max
     
     line_angle = np.arctan2(line_end[1] - line_start[1], line_end[0] - line_start[0])   
 
@@ -73,7 +77,12 @@ def drive_to_line(current_pose):
 
     desired_heading = current_pose[2] + angular_vel * 0.5 # 0.5s timestep
 
-    print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
+    #print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
+
+    if(dist_to_point(current_pose, (2,0)) <= 0.5):
+        forward_vel = 0
+        angular_vel = 0
+        print("Stopped")
 
     return ((forward_vel, angular_vel), desired_heading)
 
