@@ -1,4 +1,5 @@
 import numpy as np
+
 def angle_diff(target, current):
     return (target - current + np.pi) % (2*np.pi) - np.pi
 
@@ -24,3 +25,19 @@ def navigate(from_pose, to_pose):
     forward_vel = np.clip(forward_vel, 0,0.2)
     angular_vel = np.clip(angular_vel, -1,1)
     return ((forward_vel, angular_vel), desired_heading)
+
+def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> tuple[float, float]:
+    """
+    pure_pursuit(robot_pose, desired_path)
+
+    robot_pose -> The current pose of the robot in form [x, y, theta]
+
+    desired_path -> The target path for the robot to follow 2xN
+
+    Calculate direction velocity and angular velocity
+    
+    """
+
+    pass
+
+
