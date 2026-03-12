@@ -34,10 +34,11 @@ else: # Using Simulator
     bot = PiBotSim(
         pose=np.array([0.7, 1.8, 0.8]),
         dt=0.05,
-        realtime=False,  # False means run as fast as possible for testing
+        realtime=True,  # False means run as fast as possible for testing
     )
 
 plotter = Bot_Plotter(bot)
+desired_heading = None
 bot.stop()
 bot.resetEncoder()
 time.sleep(1)
@@ -49,6 +50,7 @@ plotter.plt.plot([0,2], [2,0], 'r--', label="Target Line")
 
 def update_control():
     global target_pose
+    global desired_heading
     current_pose = bot.getLocalizerPose(group_number=30)
     current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
 
@@ -57,19 +59,50 @@ def update_control():
 
     print(f"Current Pose: {np.round(current_pose, 2)}, Velocity Commands: {np.round(velocity_commands, 2)}")
     bot.move(*velocity_commands)
-    plotter.update(desired_heading=desired_heading)
+    #plotter.update(desired_heading=desired_heading)
+
+def simulate(time_now, last_sim_time, last_control_time):
+
+ 
+    if bot.realtime: #if simulating in realtime
+        if time_now - last_control_time >= 0.5: #Update controls at 2hz (mimic localiser speed)
+            update_control()
+            last_control_time = time_now
+
+        if time_now - last_sim_time >= 0.05: # sim and plot at 20hz for smooth animation
+            bot.step(timestep=0.05)
+            plotter.update(desired_heading=desired_heading)
+            last_sim_time = time_now
+    
+    # Sim asap if realtime is false        
+    else:
+        if time_now - last_control_time >= 0.5:
+            update_control()
+            last_control_time = time_now
+
+        bot.step(timestep=0.05)
+        plotter.update(desired_heading=desired_heading)
 
 def main_loop():
-    last_loop_time = time.time()
+    
+    #Initilise timers
+    last_control_time = time.time()
     last_sim_time = time.time()
+    
     while True:
-        if(time.time() - last_loop_time >= 0.25): # Run the main loop at 2 Hz
-            update_control()
-            last_loop_time = time.time()
+        now = time.time()
+
+        # If using sim, do sim stuff
+        if use_simulation:
+            simulate(now, last_sim_time, last_control_time)
+
         
-        if(use_simulation and time.time() - last_sim_time >= 0.05): # Update the simulation at 20 Hz for smooth animation
-            bot.step(timestep=0.05)
-            last_sim_time = time.time()
+        # Update control for real robot, no sim or plots required
+        else:
+            if now - last_control_time >= 0.5: #Run program at 2hz (localiser speed)
+                update_control()
+                last_control_time = now
+
 
 def heading_controller():
     while True:

@@ -14,7 +14,6 @@ class Bot_Plotter():
         self.axes = self.fig.axes[0]
 
         
-        self.path = [[pose[0], pose[1]]]
         self.arena_size = 2.0 # meters
 
         self.axes.set_xlim(-0.1, self.arena_size + 0.1)
@@ -59,9 +58,9 @@ class Bot_Plotter():
         #self.path_line.set_data(self.path_x, self.path_y)
 
         # Update robot triangle
-        pose = self.bot.getLocalizerPose(group_number=30)
+        #pose = self.bot.getLocalizerPose(group_number=30)
+        pose = self.bot.pose
         x, y, theta = pose
-        self.path.append([pose[0], pose[1]])
         L = 0.08
         triangle = np.array([[L, 0], [-L/2, L/2], [-L/2, -L/2], [L, 0]])
         R = np.array([[np.cos(theta), -np.sin(theta)],
@@ -81,10 +80,12 @@ class Bot_Plotter():
                 (x + dx, y + dy)
             )
 
-        # Update localiser
-        lx, ly, _ = pose
+        # Localiser pose for black +
+        localiser_pose = self.bot.getLocalizerPose(group_number=30)
+        lx, ly, _ = localiser_pose
         self.localiser_dot.set_data([lx], [ly])
-        self.path_line.set_data([point[0] for point in self.path], [point[1] for point in self.path])
 
+        # True simulated path
+        self.path_line.set_data(self.bot.path_x, self.bot.path_y)
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
