@@ -9,7 +9,7 @@ from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
 
-use_simulation = False
+use_simulation = True
 on_campus = True
 
 if(not use_simulation):
@@ -51,7 +51,7 @@ def update_control():
     current_pose = bot.getLocalizerPose(group_number=30)
     current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
 
-    if(current_pose == (0,0,0)):
+    if(current_pose[0] == 0 and current_pose[1] == 0 and current_pose[2] == 0):
         bot.move(0,0)
         plotter.update(0)
     else:

@@ -59,7 +59,7 @@ class Bot_Plotter():
         #self.path_line.set_data(self.path_x, self.path_y)
 
         # Update robot triangle
-        pose = self.bot.getLocalizerPose(group_number=30)
+        pose = self.bot.pose
         x, y, theta = pose
         self.path.append([pose[0], pose[1]])
         L = 0.08
