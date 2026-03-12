@@ -4,7 +4,7 @@ from pibot.pibot_sim import PiBotSim
 import time
 import numpy as np
 from colour_printing import print_coloured, bcolors
-from navigation import navigate, drive_to_line
+from navigation import drive_to_segment, navigate, drive_to_line, generate_bernoulli
 from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
@@ -32,7 +32,7 @@ if(not use_simulation):
 else: # Using Simulator
     print_coloured("Running in SIMULATION mode. No real robot will be controlled.", bcolors.WARNING)
     bot = PiBotSim(
-        pose=np.array([0.7, 1.8, 0.8]),
+        pose=np.array([1.0, 1.0, 0.8]),
         dt=0.05,
         realtime=True,  # False means run as fast as possible for testing
     )
@@ -49,20 +49,66 @@ start = time.time()
 
 plotter.plt.plot([0,2], [2,0], 'r--', label="Target Line")
 
+# WAYPOINT TRACKING
+just_waypoint_tracking = False
+# DRIVE TO LINE FLAG
+drive_to_line_func = False
+
+# PURE PURSUIT ATTEMPT
+bernoulli_path = generate_bernoulli(center=(1.0, 1.0))
+print("bernoulli_path", type(bernoulli_path))
+path_index = 0
+bernoulli_path_ting = True
+
+
+def bernoulli_segment_follow(current_pose):
+    global path_index
+    global target_reached
+    global desired_heading
+
+    if path_index >= bernoulli_path.shape[1] - 1:
+        target_reached = True
+        return (0, 0), desired_heading, target_reached
+
+    line_start = bernoulli_path[:, path_index]
+    line_end = bernoulli_path[:, path_index + 5]
+
+    velocity_commands, desired_heading, segment_done = drive_to_segment(
+        current_pose, line_start, line_end, print_statements=True
+    )
+
+    if segment_done:
+        path_index += 1
+
+    return velocity_commands, desired_heading, target_reached
+  
+
 def update_control():
     global target_pose
     global desired_heading
     global target_reached
-    current_pose = bot.getLocalizerPose(group_number=30)
-    current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
-
-    #velocity_commands, desired_heading = navigate(current_pose, target_pose)
+    global path_index
     
+    # HANDLE PRINTING
     if (bot.realtime == False): # Disabled in case of trying to sim ASAP
         print_statements = False
     else:
         print_statements = True
-    velocity_commands, desired_heading, target_reached = drive_to_line(current_pose, print_statements)
+
+    current_pose = bot.getLocalizerPose(group_number=30)
+    current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
+
+    # Just waypoint tracking
+    if just_waypoint_tracking:
+        velocity_commands, desired_heading = navigate(current_pose, target_pose)
+
+    # 1.2
+    if drive_to_line_func:
+        velocity_commands, desired_heading, target_reached = drive_to_line(current_pose, print_statements)
+
+    # 1.3
+    if bernoulli_path_ting:
+        velocity_commands, desired_heading, target_reached = bernoulli_segment_follow(current_pose)
 
     if not use_simulation and not bot.realtime: # Disabled in case of trying to sim ASAP
         pass # Don't print
