@@ -188,7 +188,7 @@ class PiBot(object):
             signal.signal(sig,orig_func)
         
     def move(self, forward_vel=0, angular_vel=0, duration=None, acceleration_time=None):
-        forward_vel    = np.clip(forward_vel, -maximum_linear_velocity, maximum_linear_velocity)
+        forward_vel = np.clip(forward_vel, -maximum_linear_velocity, maximum_linear_velocity)
         angular_vel = np.clip(angular_vel, -maximum_angular_velocity, maximum_angular_velocity)
 
         forward_vel_clicks = forward_vel * encoder_clicks_per_m
