@@ -57,7 +57,7 @@ def stop_program():
     bot.stop()
     plotter.keep_plot()
     if(on_campus and not use_simulation):
-        #wifi_manager.assert_connection_to_network("QUT")
+        wifi_manager.assert_connection_to_network("QUT")
         pass
     exit()
     
