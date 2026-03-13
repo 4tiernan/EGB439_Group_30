@@ -18,9 +18,12 @@ def navigate(from_pose, to_pose):
     angular_vel_gain = 0.5
 
     heading_correction = 0
-    if(dist_to_target < 0.1): # If we are close to the target, focus on correcting heading rather than moving forward.
-        forward_vel_gain = 0
+
+    # if(dist_to_target < 0.1): # If we are close to the target, focus on correcting heading rather than moving forward.
+    #     forward_vel_gain = 0
+
         #heading_correction = 0.1 * (to_pose[2] - from_pose[2]) # Add a correction term to help turn in place when close to the target.
+    # COMMENT: Doesn't this mean at 10cm out, we stop moving?
 
     forward_vel = forward_vel_gain * dist_to_target    
     angular_vel = angular_vel_gain * heading_error + heading_correction
@@ -44,10 +47,12 @@ def distance_to_wall_edge(pose, arena_size=(2, 2)):
 
     return distance
 
-def drive_to_line(current_pose):
+def drive_to_line(current_pose, print_statements=True):
     # Line start and end points in world coordinates
     line_start = 0,2
     line_end = 2,0
+    target = np.array(line_end)
+    target_reached = False
     a = -2
     b = -2
     c = 4
@@ -56,7 +61,8 @@ def drive_to_line(current_pose):
     denominator = np.sqrt(a**2 + b**2)
 
     distance_to_line = numerator / denominator
-    print(f"Distance to line: {round(distance_to_line, 2)}, Wall Distance: {round(distance_to_wall_edge(current_pose), 2)}")
+    if print_statements:
+        print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
 
     heading_gain = 1
     distance_gain = 1.3
@@ -77,14 +83,16 @@ def drive_to_line(current_pose):
 
     desired_heading = current_pose[2] + angular_vel * 0.5 # 0.5s timestep
 
-    #print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
+    if print_statements:
+        print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
 
-    if(dist_to_point(current_pose, (2,0)) <= 0.5):
-        forward_vel = 0
-        angular_vel = 0
-        print("Stopped")
+    distance_to_target = np.linalg.norm(np.array([current_pose[0],current_pose[1]]) - target)
+    if distance_to_target <= 0.5: # within 0.5m of target
+        target_reached = True
+        
 
-    return ((forward_vel, angular_vel), desired_heading)
+
+    return ((forward_vel, angular_vel), desired_heading, target_reached)
 
 def pure_pursuit(current_pose):
     # Line start and end points in world coordinates
@@ -98,3 +106,71 @@ def pure_pursuit(current_pose):
     line_start_to_robot_angle = np.arctan2(current_pose[1] - line_start[1], current_pose[0] - line_start[0])
     robot_angle_to_line_angle = angle_diff(line_angle, line_start_to_robot_angle)
     pass
+
+# def follow_bernoulli(current_pose, next_berno_point):
+#     distance_to_target = np.linalg.norm(np.array([current_pose[0],current_pose[1]]) - next_berno_point)
+#     desired_heading = np.arctan2(next_berno_point[1] - current_pose[1], next_berno_point[0] - current_pose[0])
+#     heading_error = angle_diff(desired_heading, current_pose[2])
+#     forward_vel_gain = 0.3
+#     angular_vel_gain = 0.5
+#     forward_vel = forward_vel_gain * distance_to_target
+#     angular_vel = angular_vel_gain * heading_error
+#     forward_vel = np.clip(forward_vel, 0,0.2)
+#     angular_vel = np.clip(angular_vel, -1,1)
+#     desired_heading = current_pose[2] + angular_vel * 0.5 # 0.5s timestep
+
+#     return ((forward_vel, angular_vel), desired_heading)
+def drive_to_segment(current_pose, line_start, line_end, print_statements=True):
+    x1, y1 = line_start
+    x2, y2 = line_end
+
+    target = np.array(line_end)
+    target_reached = False
+
+    a = y1 - y2
+    b = x2 - x1
+    c = x1*y2 - x2*y1
+
+    numerator = a*current_pose[0] + b*current_pose[1] + c
+    denominator = np.sqrt(a**2 + b**2)
+
+    distance_to_line = numerator / denominator
+
+    line_angle = np.arctan2(y2 - y1, x2 - x1)
+
+    heading_gain = 1.0
+    distance_gain = 1.5
+    forward_vel = 0.15
+
+    line_angle_error = angle_diff(line_angle, current_pose[2])
+    distance_error = distance_to_line
+
+    angular_vel = heading_gain * line_angle_error + distance_gain * distance_error
+    angular_vel = np.clip(angular_vel, -1.0, 1.0)
+
+    desired_heading = line_angle
+
+    distance_to_target = np.linalg.norm(np.array(current_pose[:2]) - target)
+    if distance_to_target < 0.02:
+        target_reached = True
+
+    return (forward_vel, angular_vel), desired_heading, target_reached
+
+
+
+
+
+def generate_bernoulli(center=(1.0, 1.0)):
+    a = 1 / np.sqrt(2)
+
+    t_values = np.linspace(0, 2 * np.pi, 200, dtype=np.float64)
+
+    x_values = (a * np.cos(t_values)) / (np.sin(t_values)**2 + 1)
+    y_values = (a * np.cos(t_values) * np.sin(t_values)) / (np.sin(t_values)**2 + 1)
+
+    x_values = x_values + center[0]
+    y_values = y_values + center[1]
+
+    path = np.array([x_values, y_values], dtype=np.float64)
+    return path 
+
