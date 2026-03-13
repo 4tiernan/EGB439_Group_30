@@ -4,12 +4,13 @@ from pibot.pibot_sim import PiBotSim
 import time
 import numpy as np
 from colour_printing import print_coloured, bcolors
-from navigation import navigate, drive_to_line
+from navigation import *
 from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
 
 print(max_velocity_command)
+path = generate_bernoulli()
 
 use_simulation = True
 on_campus = True
@@ -53,7 +54,9 @@ def update_control():
     current_pose = (0,0,0) if current_pose is None else current_pose # If localizer fails, assume we are at the origin facing right (0 radians).
 
     #velocity_commands, desired_heading = navigate(current_pose, target_pose)
-    velocity_commands, desired_heading = drive_to_line(current_pose)
+    
+    #velocity_commands, desired_heading = drive_to_line(current_pose)
+    velocity_commands, desired_heading = pure_pursuit(current_pose, path)
 
     print(f"Current Pose: {np.round(current_pose, 2)}, Velocity Commands: {np.round(velocity_commands, 2)}")
     bot.move(*velocity_commands)

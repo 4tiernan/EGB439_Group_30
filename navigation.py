@@ -3,16 +3,16 @@ import numpy as np
 def angle_diff(target, current):
     return (target - current + np.pi) % (2*np.pi) - np.pi
 
-def navigate(from_pose, to_pose):
+def navigate(from_pose, to_pose, constant_dirve = False, custom_gain = 0.3):
     # Simple heading controller
     dist_to_target = np.sqrt((to_pose[0] - from_pose[0])**2 + (to_pose[1] - from_pose[1])**2)
     desired_heading = np.arctan2( to_pose[1] - from_pose[1], to_pose[0] - from_pose[0])
     heading_error = angle_diff(desired_heading, from_pose[2])
 
-    print(f"Current Heading:{round(np.rad2deg(from_pose[2]))}")
-    print(f"Target Heading:{round(np.rad2deg(desired_heading))}, Dist to target:{round(dist_to_target)}")
+    #print(f"Current Heading:{round(np.rad2deg(from_pose[2]))}")
+    #print(f"Target Heading:{round(np.rad2deg(desired_heading))}, Dist to target:{round(dist_to_target)}")
 
-    forward_vel_gain = 0.3
+    forward_vel_gain = custom_gain
     angular_vel_gain = 0.5
 
     heading_correction = 0
@@ -20,8 +20,10 @@ def navigate(from_pose, to_pose):
         forward_vel_gain = 0
         #heading_correction = 0.1 * (to_pose[2] - from_pose[2]) # Add a correction term to help turn in place when close to the target.
     # COMMENT: Doesn't this mean at 10cm out, we stop moving?
-
-    forward_vel = forward_vel_gain * dist_to_target    
+    if constant_dirve:
+        forward_vel = custom_gain
+    else:
+        forward_vel = forward_vel_gain * dist_to_target    
     angular_vel = angular_vel_gain * heading_error + heading_correction
     forward_vel = np.clip(forward_vel, 0,0.2)
     angular_vel = np.clip(angular_vel, -1,1)
@@ -55,7 +57,7 @@ def drive_to_line(current_pose):
     denominator = np.sqrt(a**2 + b**2)
 
     distance_to_line = numerator / denominator
-    print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
+    #print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
 
     heading_gain = 1
     distance_gain = 1.5
@@ -75,7 +77,7 @@ def drive_to_line(current_pose):
 
     desired_heading = current_pose[2] + angular_vel * 0.5 # 0.5s timestep
 
-    print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
+    #print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
 
     return ((forward_vel, angular_vel), desired_heading)
 
@@ -104,7 +106,13 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> np.ndarray:
     
     """
 
+    #Step 0 - Adjust path to be [x,y],[x2,y2]
+    x = path[0]
+    y = path[1]
+    path = np.column_stack((x,y))
+
     #Step 1 - Find closest point on path
+
     robot_pos = current_pose[0:2] # [x, y]
 
     closest_point = np.array([0, 0], dtype=np.float64)
@@ -136,7 +144,8 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> np.ndarray:
 
 
     #Step 3 - Calcuate heading to target point
-    return navigate(current_pose, np.array(goal[0], goal[1], 0))
+    print(goal)
+    return navigate(current_pose, np.array([goal[0], goal[1], 0]), True, 0.1)
 
 
 def march_distance_along_path(path:np.ndarray, waypoint:int, scalar:float, distance:float) -> np.ndarray:
@@ -161,9 +170,9 @@ def march_distance_along_path(path:np.ndarray, waypoint:int, scalar:float, dista
     remaining_distance -= line_length # Remove the line distance
     waypoint += 1
     #Run this proccess again with no scalar
-    for i in range(waypoint, len(path)):
-        line_start = path[i]
-        line_end = path[i + 1]
+    while True:
+        line_start = path[waypoint]
+        line_end = path[(waypoint + 1) % len(path)]
 
         line_length = np.linalg.norm(line_start - line_end)
 
@@ -173,14 +182,15 @@ def march_distance_along_path(path:np.ndarray, waypoint:int, scalar:float, dista
             return point_on_line(line_start, line_end, line_length)
         
         remaining_distance -= line_length # Remove the line distance
+        waypoint += 1
+        if waypoint >= len(path):
+            waypoint = 0
 
-    # Reached end of path with no goal
-    return path[len(path) - 1]
 
 def closest_point_line(start:np.ndarray, end:np.ndarray, point:np.array) -> np.ndarray:
     return point_on_line(start, end, closest_line(start, end, point))
 
-def closest_line(start:np.ndarray, end:np.ndarray, point:np.array) -> float:
+def closest_line(start:np.ndarray, end:np.ndarray, point:np.ndarray) -> float:
     """
         Returns the scalar that results in a vector closest to the point
     """
