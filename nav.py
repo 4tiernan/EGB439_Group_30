@@ -24,7 +24,7 @@ def run_controller(current_pose, target_path, selected_controller):
     elif selected_controller == "drive_to_line":
         velocity_commands, desired_heading, target_reached = drive_to_line(current_pose)
     elif selected_controller == "bernoulli_path":
-        velocity_commands, desired_heading, target_reached = bernoulli_segment_follow(current_pose, target_path)
+        velocity_commands, desired_heading, target_reached = pure_pursuit(current_pose, target_path)
     else:
         raise ValueError("Invalid controller selected")
     
@@ -39,7 +39,7 @@ def waypoint(from_pose, to_pose):
     print(f"Current Heading:{round(np.rad2deg(from_pose[2]))}")
     print(f"Target Heading:{round(np.rad2deg(desired_heading))}, Dist to target:{round(dist_to_target)}")
 
-    forward_vel_gain = 0.3
+    forward_vel_gain = 0.1
     angular_vel_gain = 0.5
 
     heading_correction = 0
@@ -50,7 +50,8 @@ def waypoint(from_pose, to_pose):
         #heading_correction = 0.1 * (to_pose[2] - from_pose[2]) # Add a correction term to help turn in place when close to the target.
     # COMMENT: Doesn't this mean at 10cm out, we stop moving?
 
-    forward_vel = forward_vel_gain * dist_to_target    
+    #forward_vel = forward_vel_gain * dist_to_target    
+    forward_vel = 0.1
     angular_vel = angular_vel_gain * heading_error + heading_correction
     forward_vel = np.clip(forward_vel, 0,0.2)
     angular_vel = np.clip(angular_vel, -1,1)
@@ -118,28 +119,6 @@ def drive_to_line(current_pose, print_statements=True):
         target_reached = True
         
     return ((forward_vel, angular_vel), desired_heading, target_reached)
-
-path_index = 0
-def bernoulli_segment_follow(current_pose, bernoulli_path):
-    global path_index
-    global target_reached
-    global desired_heading
-
-    if path_index >= bernoulli_path.shape[1] - 1:
-        target_reached = True
-        return (0, 0), desired_heading, target_reached
-
-    line_start = bernoulli_path[:, path_index]
-    line_end = bernoulli_path[:, path_index + 5]
-
-    velocity_commands, desired_heading, segment_done = drive_to_segment(
-        current_pose, line_start, line_end, print_statements=True
-    )
-
-    if segment_done:
-        path_index += 1
-
-    return velocity_commands, desired_heading, target_reached
 
 def drive_to_segment(current_pose, line_start, line_end, print_statements=True):
     x1, y1 = line_start
@@ -243,7 +222,7 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> np.ndarray:
 
     #Step 3 - Calcuate heading to target point
     print(goal)
-    return waypoint(current_pose, np.array([goal[0], goal[1], 0]), True, 0.1)
+    return waypoint(current_pose, np.array([goal[0], goal[1], 0]))
 
 
 def march_distance_along_path(path:np.ndarray, waypoint:int, scalar:float, distance:float) -> np.ndarray:

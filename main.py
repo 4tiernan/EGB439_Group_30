@@ -48,7 +48,7 @@ time.sleep(1)
 start = time.time()
 
 available_controllers = ["waypoint", "drive_to_line", "bernoulli_path"]
-selected_controller = available_controllers[1] # Change this index to select different controllers (0, 1, or 2)
+selected_controller = available_controllers[2] # Change this index to select different controllers (0, 1, or 2)
 print(f"Selected Controller: {selected_controller}")
 target_path = nav.initalise_controller(selected_controller)
 plotter.plot_target_path(target_path)

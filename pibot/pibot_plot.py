@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch
 import numpy as np
-from navigation import generate_bernoulli
 
 class Bot_Plotter():
     def __init__(self, bot): 
@@ -47,15 +46,7 @@ class Bot_Plotter():
         self.robot_outline,= self.axes.plot([], [], 'r-')
         self.localiser_dot,= self.axes.plot([], [], 'k+', markersize=8, label='Localiser')
 
-<<<<<<< HEAD
-        path = generate_bernoulli()
-        x = path[0]
-        y = path[1]
-
-        self.figure_eight_path,         = self.axes.plot(x, y)
-=======
         self.pose_text = self.axes.text(2, 2.2, f"Pose: (0,0,0)", ha='center', va='center', fontsize=8)
->>>>>>> origin/Tiernan
                 
         # Mark the start position with a green dot
         self.axes.plot(pose[0], pose[1], 'go', markersize=6, label='Start')
@@ -71,11 +62,6 @@ class Bot_Plotter():
         #self.path_line.set_data(self.path_x, self.path_y)
 
         # Update robot triangle
-<<<<<<< HEAD
-        #pose = self.bot.getLocalizerPose(group_number=30)
-        pose = self.bot.pose
-=======
->>>>>>> origin/Tiernan
         x, y, theta = pose
         self.path.append([pose[0], pose[1]])
         L = 0.08
