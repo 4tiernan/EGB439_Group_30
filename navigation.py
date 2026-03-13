@@ -202,3 +202,17 @@ def point_on_line(start:np.ndarray, end:np.ndarray, scalar:float) -> np.ndarray:
     line_vector = end - start
 
     return start + line_vector * scalar
+
+def generate_bernoulli(center=(1.0, 1.0)):
+    a = 1 / np.sqrt(2)
+
+    t_values = np.linspace(0, 2 * np.pi, 200, dtype=np.float64)
+
+    x_values = (a * np.cos(t_values)) / (np.sin(t_values)**2 + 1)
+    y_values = (a * np.cos(t_values) * np.sin(t_values)) / (np.sin(t_values)**2 + 1)
+
+    x_values = x_values + center[0]
+    y_values = y_values + center[1]
+
+    path = np.array([x_values, y_values], dtype=np.float64)
+    return path 
