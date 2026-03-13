@@ -92,7 +92,7 @@ def pure_pursuit(current_pose):
     robot_angle_to_line_angle = angle_diff(line_angle, line_start_to_robot_angle)
     pass
 
-def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> tuple[float, float]:
+def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> np.ndarray:
     """
     pure_pursuit(robot_pose, desired_path)
 
@@ -116,9 +116,9 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> tuple[float, float
         current_waypoint = path[i]
         next_waypoint = path[i + 1]
 
-        waypoint_scalar =  
+        waypoint_scalar = closest_line(current_waypoint, next_waypoint, robot_pos)
 
-        point = point_on_line(start, end, )
+        point = point_on_line(current_waypoint, next_waypoint, waypoint_scalar)
 
         distance = np.linalg.norm(point - robot_pos)
 
@@ -126,18 +126,56 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> tuple[float, float
             closest_point_distance = distance
             closest_point = point
             waypoint_index = i
-
-
-    
+            line_scalar = waypoint_scalar
 
 
     #Step 2 - Find point based on distance along path
+    carrot_distance = 0.1
+
+    goal = march_distance_along_path(path, waypoint_index, line_scalar, carrot_distance)
+
 
     #Step 3 - Calcuate heading to target point
+    return navigate(current_pose, np.array(goal[0], goal[1], 0))
 
 
-    pass
+def march_distance_along_path(path:np.ndarray, waypoint:int, scalar:float, distance:float) -> np.ndarray:
+    """
+        Marches along the path from the starting pos and returns the position on the line after a certain distance
+    """
+    remaining_distance = distance
 
+    #Start step
+    line_start = path[waypoint]
+    line_end = path[waypoint + 1]
+
+    line_length = np.linalg.norm(line_start - line_end)
+
+    line_length = line_length * (1 - scalar) # get the remaining length of the line to the next waypoint
+
+    if (line_length >= remaining_distance): # the marching is finished
+        #Find the end point
+        line_length = scalar + remaining_distance
+        return point_on_line(line_start, line_end, line_length)
+    
+    remaining_distance -= line_length # Remove the line distance
+    waypoint += 1
+    #Run this proccess again with no scalar
+    for i in range(waypoint, len(path)):
+        line_start = path[i]
+        line_end = path[i + 1]
+
+        line_length = np.linalg.norm(line_start - line_end)
+
+        if (line_length >= remaining_distance): # the marching is finished
+            #Find the end point
+            line_length = remaining_distance
+            return point_on_line(line_start, line_end, line_length)
+        
+        remaining_distance -= line_length # Remove the line distance
+
+    # Reached end of path with no goal
+    return path[len(path) - 1]
 
 def closest_point_line(start:np.ndarray, end:np.ndarray, point:np.array) -> np.ndarray:
     return point_on_line(start, end, closest_line(start, end, point))
