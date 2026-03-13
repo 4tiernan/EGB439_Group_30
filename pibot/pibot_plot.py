@@ -13,15 +13,13 @@ class Bot_Plotter():
         # Figure / axes
         self.fig, _ = plt.subplots(1, 1)
         self.axes = self.fig.axes[0]
-
-        
         self.path = [[pose[0], pose[1]]]
         self.arena_size = 2.0 # meters
 
         self.axes.set_xlim(-0.1, self.arena_size + 0.1)
         self.axes.set_ylim(-0.1, self.arena_size + 0.1)
         self.axes.set_aspect('equal')
-        self.axes.set_title("PiBot Simulator")
+        self.axes.set_title("PiBot Plotter")
         self.axes.set_xlabel("X (m)")
         self.axes.set_ylabel("Y (m)")
 
@@ -49,25 +47,35 @@ class Bot_Plotter():
         self.robot_outline,= self.axes.plot([], [], 'r-')
         self.localiser_dot,= self.axes.plot([], [], 'k+', markersize=8, label='Localiser')
 
+<<<<<<< HEAD
         path = generate_bernoulli()
         x = path[0]
         y = path[1]
 
         self.figure_eight_path,         = self.axes.plot(x, y)
+=======
+        self.pose_text = self.axes.text(2, 2.2, f"Pose: (0,0,0)", ha='center', va='center', fontsize=8)
+>>>>>>> origin/Tiernan
                 
         # Mark the start position with a green dot
         self.axes.plot(pose[0], pose[1], 'go', markersize=6, label='Start')
         # Legend for start position
         self.axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=8)
 
-    def update(self, desired_heading=None):
+    def plot_target_path(self, path):
+        self.axes.plot(*path, 'r--', label="Target Path")
+
+    def update(self, pose, desired_heading=None):
         # Update path
                 
         #self.path_line.set_data(self.path_x, self.path_y)
 
         # Update robot triangle
+<<<<<<< HEAD
         #pose = self.bot.getLocalizerPose(group_number=30)
         pose = self.bot.pose
+=======
+>>>>>>> origin/Tiernan
         x, y, theta = pose
         self.path.append([pose[0], pose[1]])
         L = 0.08
@@ -89,10 +97,22 @@ class Bot_Plotter():
                 (x + dx, y + dy)
             )
 
-        # Update localiser
-        lx, ly, _ = pose
+        # Localiser pose for black +
+        localiser_pose = self.bot.getLocalizerPose(group_number=30)
+        lx, ly, _ = localiser_pose
         self.localiser_dot.set_data([lx], [ly])
+
+        # Update path plot and text pos
         self.path_line.set_data([point[0] for point in self.path], [point[1] for point in self.path])
+        self.pose_text.set_text(f"Pose: {[round(x,2), round(y,2), round(np.rad2deg(theta))]}")   # update text
 
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
+    
+    def keep_plot(self):
+        try:
+            while True: 
+                self.fig.canvas.draw_idle()
+                self.fig.canvas.flush_events()
+        except: 
+            pass
