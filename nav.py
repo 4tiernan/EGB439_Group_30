@@ -1,4 +1,7 @@
 import numpy as np
+
+previous_path_index = -1
+
 def angle_diff(target, current):
     return (target - current + np.pi) % (2*np.pi) - np.pi
 
@@ -183,6 +186,8 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> np.ndarray:
     
     """
 
+    global previous_path_index
+
     #Step 0 - Adjust path to be [x,y],[x2,y2]
     x = path[0]
     y = path[1]
@@ -197,9 +202,15 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> np.ndarray:
     waypoint_index = -1
     line_scalar = 0
 
-    for i in range(len(path)-1):
-        current_waypoint = path[i]
-        next_waypoint = path[i + 1]
+    if previous_path_index == -1:
+        search_range = len(path)
+        previous_path_index = 0
+    else:
+        search_range = 10
+
+    for i in range(previous_path_index, previous_path_index + search_range):
+        current_waypoint = path[i % len(path)]
+        next_waypoint = path[(i + 1) % len(path)]
 
         waypoint_scalar = closest_line(current_waypoint, next_waypoint, robot_pos)
 
@@ -213,6 +224,7 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> np.ndarray:
             waypoint_index = i
             line_scalar = waypoint_scalar
 
+    previous_path_index = waypoint_index
 
     #Step 2 - Find point based on distance along path
     carrot_distance = 0.1
