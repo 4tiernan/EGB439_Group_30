@@ -109,14 +109,26 @@ def pure_pursuit(current_pose:np.ndarray, path:np.ndarray) -> tuple[float, float
 
     closest_point = np.array([0, 0], dtype=np.float64)
     closest_point_distance = np.Infinity
+    waypoint_index = -1
+    line_scalar = 0
 
     for i in range(len(path)-1):
         current_waypoint = path[i]
         next_waypoint = path[i + 1]
 
-        point = closest_point_line(current_waypoint, next_waypoint)
+        waypoint_scalar =  
+
+        point = point_on_line(start, end, )
 
         distance = np.linalg.norm(point - robot_pos)
+
+        if (distance < closest_point_distance):
+            closest_point_distance = distance
+            closest_point = point
+            waypoint_index = i
+
+
+    
 
 
     #Step 2 - Find point based on distance along path
