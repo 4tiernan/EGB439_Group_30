@@ -13,7 +13,7 @@ class Bot_Plotter():
         self.fig, _ = plt.subplots(1, 1)
         self.axes = self.fig.axes[0]
 
-        
+        self.path = [[pose[0], pose[1]]]
         self.arena_size = 2.0 # meters
 
         self.axes.set_xlim(-0.1, self.arena_size + 0.1)
@@ -52,14 +52,17 @@ class Bot_Plotter():
         # Legend for start position
         self.axes.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=8)
 
-    def update(self, desired_heading=None):
+    def plot_target_path(self, path):
+        self.axes.plot(*path, 'r--', label="Target Path")
+
+    def update(self, pose, desired_heading=None):
         # Update path
                 
         #self.path_line.set_data(self.path_x, self.path_y)
 
         # Update robot triangle
-        pose = self.bot.pose
         x, y, theta = pose
+        self.path.append([pose[0], pose[1]])
         L = 0.08
         triangle = np.array([[L, 0], [-L/2, L/2], [-L/2, -L/2], [L, 0]])
         R = np.array([[np.cos(theta), -np.sin(theta)],
@@ -85,7 +88,7 @@ class Bot_Plotter():
         self.localiser_dot.set_data([lx], [ly])
 
         # True simulated path
-        self.path_line.set_data(self.bot.path_x, self.bot.path_y)
+        self.path_line.set_data([point[0] for point in self.path], [point[1] for point in self.path])
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
     
