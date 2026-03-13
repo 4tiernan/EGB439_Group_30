@@ -19,7 +19,7 @@ class Bot_Plotter():
         self.axes.set_xlim(-0.1, self.arena_size + 0.1)
         self.axes.set_ylim(-0.1, self.arena_size + 0.1)
         self.axes.set_aspect('equal')
-        self.axes.set_title("PiBot Simulator")
+        self.axes.set_title("PiBot Plotter")
         self.axes.set_xlabel("X (m)")
         self.axes.set_ylabel("Y (m)")
 
@@ -58,7 +58,6 @@ class Bot_Plotter():
         #self.path_line.set_data(self.path_x, self.path_y)
 
         # Update robot triangle
-        #pose = self.bot.getLocalizerPose(group_number=30)
         pose = self.bot.pose
         x, y, theta = pose
         L = 0.08
@@ -89,3 +88,11 @@ class Bot_Plotter():
         self.path_line.set_data(self.bot.path_x, self.bot.path_y)
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
+    
+    def keep_plot(self):
+        try:
+            while True: 
+                self.fig.canvas.draw_idle()
+                self.fig.canvas.flush_events()
+        except: 
+            pass

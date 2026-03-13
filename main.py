@@ -13,6 +13,7 @@ print(max_velocity_command)
 
 use_simulation = True
 on_campus = True
+
 if(not use_simulation):
     if(wifi_manager.get_windows_ssid() != "QUT" and wifi_manager.get_windows_ssid() != "EGB439"): # If not connected to QUT or EGB439, try to connect to the penquin pi network.
         on_campus = False
@@ -20,7 +21,7 @@ if(not use_simulation):
     if(on_campus):
         wifi_manager.assert_connection_to_network("EGB439") # Ensure you are connected to the EGB439 network.
         bot_ip = "172.19.232.120"
-        localiser_ip = "egb439localiser1"
+        localiser_ip = "egb439localiser2"
         
     else:
         wifi_manager.assert_connection_to_network("penguinpi:07:c5:ca")
@@ -160,7 +161,7 @@ def main_loop():
 
         # Update control for real robot, no sim or plots required
         else:
-            if now - last_control_time >= 0.5: #Run program at 2hz (localiser speed)
+            if now - last_control_time >= 0.1: #Run program at 2hz (localiser speed)
                 update_control()
                 last_control_time = now
 
@@ -181,6 +182,7 @@ try:
 except KeyboardInterrupt:
     print("Keyboard Interrupt, stopping robot")
     bot.stop()
+    plotter.keep_plot()
     time.sleep(0.5) # Give the stop command time to be sent before exiting.
     if(on_campus and not use_simulation):
         #wifi_manager.assert_connection_to_network("QUT")

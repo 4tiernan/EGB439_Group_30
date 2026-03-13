@@ -2,6 +2,9 @@ import numpy as np
 def angle_diff(target, current):
     return (target - current + np.pi) % (2*np.pi) - np.pi
 
+def dist_to_point(pose, point):
+    return np.sqrt((point[0] - pose[0])**2 + (point[1] - pose[1])**2)
+
 def navigate(from_pose, to_pose):
     # Simple heading controller
     dist_to_target = np.sqrt((to_pose[0] - from_pose[0])**2 + (to_pose[1] - from_pose[1])**2)
@@ -62,11 +65,12 @@ def drive_to_line(current_pose, print_statements=True):
         print(f"Distance to line: {round(distance_to_line, 2)}, Wall license: {round(distance_to_wall_edge(current_pose), 2)}")
 
     heading_gain = 1
-    distance_gain = 1.5
+    distance_gain = 1.3
     forward_vel_max = 0.25
     min_wall_dist = 0.1
-    forward_vel = np.clip(distance_to_wall_edge(current_pose) - min_wall_dist, 0, forward_vel_max) # Slow down as we get close to the wall.
-
+    
+    #forward_vel = np.clip(distance_to_wall_edge(current_pose) - min_wall_dist, 0, forward_vel_max) # Slow down as we get close to the wall.
+    forward_vel = forward_vel_max
     
     line_angle = np.arctan2(line_end[1] - line_start[1], line_end[0] - line_start[0])   
 
@@ -83,7 +87,7 @@ def drive_to_line(current_pose, print_statements=True):
         print(f"Line Angle: {round(np.rad2deg(line_angle))}, Line Angle Error: {round(np.rad2deg(line_angle_error))}, Distance Error: {round(distance_error, 2)}, Angular Vel: {round(angular_vel, 2)}")
 
     distance_to_target = np.linalg.norm(np.array([current_pose[0],current_pose[1]]) - target)
-    if distance_to_target <= 0.15: # 15% within range
+    if distance_to_target <= 0.5: # within 0.5m of target
         target_reached = True
         
 
