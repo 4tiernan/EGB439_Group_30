@@ -9,7 +9,7 @@ from pibot.pibot_plot import Bot_Plotter
 
 from pibot.pibot_const import * 
 
-use_simulation = False
+use_simulation = True
 on_campus = True
 realtime = True # Set to false to run as fast as possible (good for testing), true to run in real time
 
@@ -57,7 +57,7 @@ def stop_program():
     bot.stop()
     plotter.keep_plot()
     if(on_campus and not use_simulation):
-        wifi_manager.assert_connection_to_network("QUT")
+        #wifi_manager.assert_connection_to_network("QUT")
         pass
     exit()
     

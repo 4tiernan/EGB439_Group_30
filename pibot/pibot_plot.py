@@ -46,6 +46,8 @@ class Bot_Plotter():
         self.robot_fill    = self.axes.fill([], [], color='red', alpha=0.7)[0]
         self.robot_outline,= self.axes.plot([], [], 'r-')
         self.localiser_dot,= self.axes.plot([], [], 'k+', markersize=8, label='Localiser')
+
+        self.pose_text = self.axes.text(2, 2.2, f"Pose: (0,0,0)", ha='center', va='center', fontsize=8)
                 
         # Mark the start position with a green dot
         self.axes.plot(pose[0], pose[1], 'go', markersize=6, label='Start')
@@ -87,8 +89,10 @@ class Bot_Plotter():
         lx, ly, _ = localiser_pose
         self.localiser_dot.set_data([lx], [ly])
 
-        # True simulated path
+        # Update path plot and text pos
         self.path_line.set_data([point[0] for point in self.path], [point[1] for point in self.path])
+        self.pose_text.set_text(f"Pose: {[round(x,2), round(y,2), round(np.rad2deg(theta))]}")   # update text
+
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
     
